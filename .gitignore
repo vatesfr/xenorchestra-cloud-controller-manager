@@ -1,0 +1,19 @@
+#
+/bin/
+/charts/xenorchestra-cloud-controller-manager/values-dev.yaml
+/xenorchestra-cloud-controller-manager*
+/kubeconfig
+/kubeconfig*
+/xo-config.yaml
+__debug_bin*
+/pkg/xenorchestra/mocks
+.vscode
+#
+
+# cosign
+/cosign.key
+/cosign.pub
+
+
+# Ignore DevSpace cache and log folder
+.devspace/

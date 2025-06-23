@@ -1,0 +1,27 @@
+image:
+  repository: ghcr.io/vatesfr/xenorchestra-cloud-controller-manager
+  pullPolicy: Always
+  tag: edge
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+
+logVerbosityLevel: 4
+
+extraEnvs:
+  - name: KUBERNETES_SERVICE_HOST
+    value: 127.0.0.1
+
+enabledControllers:
+  - cloud-node
+  - cloud-node-lifecycle
+
+config:
+  url: https://xoa.example.com
+  insecure: false
+  token: "123ABC"

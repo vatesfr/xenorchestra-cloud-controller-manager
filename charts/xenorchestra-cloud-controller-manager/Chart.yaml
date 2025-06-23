@@ -1,0 +1,14 @@
+apiVersion: v2
+name: xenorchestra-cloud-controller-manager
+description: Cloud Controller Manager plugin for Xen Orchestra
+type: application
+home: https://github.com/vatesfr/xenorchestra-cloud-controller-manager
+icon: https://raw.githubusercontent.com/vatesfr/xenorchestra-cloud-controller-manager/main/charts/xenorchestra-cloud-controller-manager/icon.png
+sources:
+  - https://github.com/vatesfr/xenorchestra-cloud-controller-manager
+keywords:
+  - ccm
+  - xenorchestra
+  - kubernetes
+version: 0.0.1
+appVersion: v0.0.1

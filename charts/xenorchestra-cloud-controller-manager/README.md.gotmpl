@@ -1,0 +1,83 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+The Cloud Controller Manager (CCM) is responsible for managing node resources in cloud-based Kubernetes environments.
+
+Key functions of the Cloud Controller Manager:
+- `Node Management`: It manages nodes by initializing new nodes when they join the cluster (e.g., during scaling up) and removing nodes when they are no longer needed (e.g., during scaling down).
+- `Cloud-Specific Operations`: The CCM ensures that the cloud provider's API is integrated into the Kubernetes cluster to control and automate tasks like load balancing, storage provisioning, and node lifecycle management.
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Requirements
+
+You need to set `--cloud-provider=external` in the kubelet argument for all nodes in the cluster.
+
+## Create a Xen Orchestra token
+
+Official [documentation](https://docs.xcp-ng.org/management/manage-at-scale/xo-api/#authentication)
+
+You can use the Xen Orchestra UI, inside your user space to create a token.
+
+
+Alternatively, you can use xo-cli to create an authentication token:
+
+```shell
+$ xo-cli --createToken xoa.company.lan admin@admin.net
+Password: ********
+Successfully logged with admin@admin.net
+Authentication token created
+
+DiYBFavJwf9GODZqQJs23eAx9eh3KlsRhBi8RcoX0KM
+```
+> [!IMPORTANT]  
+> Only admin users can currently use the API.
+
+## Helm values example
+
+```yaml
+# xo-ccm.yaml
+
+config:
+  # Url the Xen Orchestra API
+  url: https://xoa.example.com
+  insecure: false
+  # Token from the previous step
+  token: "123ABC"
+
+enabledControllers:
+  - cloud-node
+  - cloud-node-lifecycle
+
+# Deploy CCM only on control-plane nodes
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+```
+
+Deploy chart:
+
+```shell
+helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
+    xenorchestra-cloud-controller-manager oci://ghcr.io/vatesfr/charts/xenorchestra-cloud-controller-manager
+```
+
+{{ template "chart.valuesSection" . }}
