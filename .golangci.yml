@@ -8,110 +8,38 @@ run:
     - integration_provision
   issues-exit-code: 1
   tests: true
-output:
-  formats:
-    text:
-      path: stdout
-      print-linter-name: true
-      print-issued-lines: true
-      colors: false
 linters:
-  default: all
-  disable:
-    - depguard
-    - errorlint
-    - exhaustruct
-    - err113
-    - forbidigo
-    - forcetypeassert
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - godox
-    - godot
+  enable:
+    - goconst
     - gosec
-    - inamedparam
-    - ireturn
-    - maintidx
-    - mnd
-    - musttag
+    - lll
+    - misspell
     - nakedret
-    - nestif
-    - nilnil
-    - nolintlint
-    - nonamedreturns
-    - paralleltest
-    - perfsprint
-    - promlinter
-    - protogetter
-    - recvcheck
-    - tagalign
-    - tagliatelle
-    - testifylint
-    - testpackage
-    - thelper
-    - varnamelen
-    - wrapcheck
-
-    # temporarily disabled linters
-    - copyloopvar
-    - intrange
+    - unconvert
   settings:
+    govet:
+      disable:
+        - structtag
     cyclop:
       max-complexity: 30
     dupl:
       threshold: 100
-    errcheck:
-      check-type-assertions: false
-      check-blank: true
-      exclude-functions:
-        - fmt.Fprintln
-        - fmt.Fprintf
-        - fmt.Fprint
-    goconst:
-      min-len: 3
-      min-occurrences: 3
-    gocyclo:
-      min-complexity: 30
-    gomoddirectives:
-      replace-local: true
-      replace-allow-list: []
-      retract-allow-no-explanation: false
-      exclude-forbidden: true
     lll:
       line-length: 200
       tab-width: 1
     misspell:
       locale: US
-    nolintlint:
-      require-explanation: false
-      require-specific: true
-      allow-unused: false
-    prealloc:
-      simple: true
-      range-loops: true
-      for-loops: false
-    staticcheck:
-      checks:
-        [
-          "all",
-          "-ST1000",
-          "-ST1003",
-          "-ST1016",
-          "-ST1020",
-          "-ST1021",
-          "-ST1022",
-          "-QF1001",
-          "-QF1008",
-        ]
-    unused:
-      local-variables-are-used: false
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  uniq-by-line: true
-  new: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 formatters:
   enable:
     - gci
@@ -123,5 +51,5 @@ formatters:
       sections:
         - standard # Captures all standard packages if they do not match another section.
         - default # Contains all imports that could not be matched to another section type.
-        - prefix(github.com/sergelogvinov) # Groups all imports with the specified Prefix.
+        - prefix(github.com/vatesfr) # Groups all imports with the specified Prefix.
         - prefix(k8s.io) # Groups all imports with the specified Prefix.
