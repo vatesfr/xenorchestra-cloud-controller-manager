@@ -24,7 +24,7 @@ pipelines:
 # We recommend to skip image building during development (devspace dev) as much as possible
 images:
   app:
-    image: git.vates.tech/cyrille.gandon/xenorchestra-cloud-controller-manager:v0.0.1-dirty
+    image: ghcr.io/vatesfr/xenorchestra-cloud-controller-manager
     dockerfile: ./Dockerfile
 
 # This is a list of `deployments` that DevSpace can create for this project
@@ -39,7 +39,7 @@ deployments:
 dev:
   app:
     # Search for the container that runs this image
-    imageSelector: git.vates.tech/cyrille.gandon/xenorchestra-cloud-controller-manager:v0.0.1-dirty
+    imageSelector: ghcr.io/vatesfr/xenorchestra-cloud-controller-manager
     # Replace the container image with this dev-optimized image (allows to skip image building during development)
     devImage: git.vates.tech/cyrille.gandon/devspace-go:1.24-bookworm
     # Remove security context to run as root
