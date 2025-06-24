@@ -49,7 +49,7 @@ spec:
           args:
             - --v={{ .Values.logVerbosityLevel }}
             - --cloud-provider=xenorchestra
-            - --cloud-config=/etc/xenorchestra/xo-config.yaml
+            - --cloud-config=/etc/xenorchestra/config.yaml
             - --controllers={{- trimAll "," (include "xenorchestra-cloud-controller-manager.enabledControllers" . ) }}
             - --leader-elect-resource-name=cloud-controller-manager-xenorchestra
             - --use-service-account-credentials
