@@ -6,7 +6,6 @@
 /kubeconfig*
 /xo-config.yaml
 __debug_bin*
-/pkg/xenorchestra/mocks
 .vscode
 #
 

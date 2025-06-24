@@ -23,6 +23,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	xenorchestra "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 	mock_library "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra/mocks"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"

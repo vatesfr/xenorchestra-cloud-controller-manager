@@ -23,6 +23,7 @@ import (
 	"unicode"
 
 	"github.com/gofrs/uuid"
+
 	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 
@@ -146,7 +147,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 
 	addresses := []v1.NodeAddress{}
 
-	if providedIP, ok := node.ObjectMeta.Annotations[cloudproviderapi.AnnotationAlphaProvidedIPAddr]; ok {
+	if providedIP, ok := node.Annotations[cloudproviderapi.AnnotationAlphaProvidedIPAddr]; ok {
 		for _, ip := range strings.Split(providedIP, ",") {
 			addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: ip})
 		}

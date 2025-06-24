@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid"
+
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 	xocfg "github.com/vatesfr/xenorchestra-go-sdk/pkg/config"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"

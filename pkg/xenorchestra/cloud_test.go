@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 )
 

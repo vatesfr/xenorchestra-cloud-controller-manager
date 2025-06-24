@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
+
 	xosdk "github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 )
 

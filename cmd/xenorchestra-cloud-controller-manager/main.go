@@ -28,6 +28,7 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
+
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
 	"k8s.io/apimachinery/pkg/util/wait"

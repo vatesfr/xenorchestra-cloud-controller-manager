@@ -22,6 +22,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 	xosdk "github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 )
