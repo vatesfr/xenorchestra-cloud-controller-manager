@@ -67,7 +67,28 @@ kubectl apply -f https://raw.githubusercontent.com/vatesfr/xenorchestra-cloud-co
 ```
 
 ### Method 2: helm chart
-//TODO:
+
+Create the config file
+
+```yaml
+# xo-ccm.yaml
+# -- Xen Orchestra cluster config.
+config:
+  url: http://xo.example.com
+  insecure: false
+  token: "ABC..."
+# Additional values are available in the chart.
+logVerbosityLevel: 5
+...
+```
+
+Deploy Xen Orchestra CCM
+
+```
+helm upgrade -i --namespace=kube-system -f xo-ccm.yml \
+    xenorchestra-cloud-controller-manager \
+    oci://ghcr.io/vatesfr/charts/xenorchestra-cloud-controller-manager
+```
 
 More options you can find [here](charts/xenorchestra-cloud-controller-manager)
 
