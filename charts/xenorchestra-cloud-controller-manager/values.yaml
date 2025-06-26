@@ -145,3 +145,6 @@ extraVolumes: []
 
 # -- Additional volume mounts for Pods
 extraVolumeMounts: []
+
+# --  Host networking requested for the CCM Pod
+useHostNetwork: false

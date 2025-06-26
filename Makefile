@@ -106,6 +106,12 @@ helm-release: ## Helm Release
 docs:
 	yq -i '.appVersion = "$(TAG)"' charts/xenorchestra-cloud-controller-manager/Chart.yaml -y
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
+		-f charts/xenorchestra-cloud-controller-manager/values.hostnetwork.yaml \
+		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-hostnetwork.yml
+	helm template -n kube-system xenorchestra-cloud-controller-manager \
+		-f charts/xenorchestra-cloud-controller-manager/values.edge.yaml \
+		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-edge.yml
+	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		--set-string image.tag=$(TAG) \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager.yml
 	helm-docs --sort-values-order=file charts/xenorchestra-cloud-controller-manager
