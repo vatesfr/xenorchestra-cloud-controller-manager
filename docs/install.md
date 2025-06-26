@@ -90,7 +90,7 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yml \
     oci://ghcr.io/vatesfr/charts/xenorchestra-cloud-controller-manager
 ```
 
-More options you can find [here](charts/xenorchestra-cloud-controller-manager)
+More options you can find [here](../charts/xenorchestra-cloud-controller-manager/README.md#values)
 
 ## Troubleshooting
 
