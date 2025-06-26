@@ -29,7 +29,7 @@ func TestNewCloudError(t *testing.T) {
 	cloud, err := newCloud(&XOConfig{})
 	assert.NotNil(t, err)
 	assert.Nil(t, cloud)
-	assert.EqualError(t, err, "no Xen Orchestra instance found")
+	assert.EqualError(t, err, "url is required")
 }
 
 func TestCloud(t *testing.T) {

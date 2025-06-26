@@ -54,7 +54,6 @@ func main() {
 	controllerAliases := names.CCMControllerAliases()
 	// Here is an example to remove the controller which is not needed.
 	// e.g. remove the cloud-node-lifecycle controller which current cloud provider does not need.
-	delete(controllerInitializers, "cloud-node-lifecycle")
 	delete(controllerInitializers, "service-lb")
 	delete(controllerInitializers, "node-route")
 

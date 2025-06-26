@@ -64,7 +64,7 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 		if err == cloudprovider.InstanceNotFound {
 			klog.V(4).InfoS("instances.InstanceExists() instance not found", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
-			return false, cloudprovider.InstanceNotFound
+			return false, nil // Return nil, it's not an error: it's expected when the VM has been deleted
 		}
 
 		return false, err
@@ -75,7 +75,7 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 
 // InstanceShutdown returns true if the instance is shutdown according to the cloud provider.
 // Use the node.name or node.spec.providerID field to find the node in the cloud provider.
-func (i *instances) InstanceShutdown(_ context.Context, node *v1.Node) (bool, error) {
+func (i *instances) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, error) {
 	klog.V(4).InfoS("instances.InstanceShutdown() called", "node", klog.KRef("", node.Name))
 
 	if node.Spec.ProviderID == "" {
@@ -90,12 +90,12 @@ func (i *instances) InstanceShutdown(_ context.Context, node *v1.Node) (bool, er
 		return false, nil
 	}
 
-	vmr, _, err := provider.ParseProviderID(node.Spec.ProviderID)
+	vmr, err := i.getInstance(ctx, node)
 	if err != nil {
 		if err == cloudprovider.InstanceNotFound {
 			klog.InfoS("instances.InstanceShutdown() instance not found, is it deleted?", "providerID", node.Spec.ProviderID)
 
-			return true, nil // Vm not found, probably deleted
+			return false, fmt.Errorf("vm not found: %s", node.Spec.ProviderID) // Vm not found, probably deleted
 		}
 
 		klog.ErrorS(err, "instances.InstanceShutdown() failed to parse providerID", "providerID", node.Spec.ProviderID)

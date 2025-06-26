@@ -65,22 +65,24 @@ func (ts *ccmTestSuite) SetupTest() {
 
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001"))).Return(
 		&payloads.VM{
-			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
-			NameLabel: "pool-1-node-1",
-			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container: "8af7110d-bfad-407a-a663-9527d10a6583",
-			CPUs:      payloads.CPUs{Max: 4},
-			Memory:    payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
+			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
+			NameLabel:  "pool-1-node-1",
+			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
+			Container:  "8af7110d-bfad-407a-a663-9527d10a6583",
+			CPUs:       payloads.CPUs{Max: 4},
+			Memory:     payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
+			PowerState: "Running",
 		}, nil).AnyTimes()
 
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002"))).Return(
 		&payloads.VM{
-			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
-			NameLabel: "pool-2-node-1",
-			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			Container: "8af7110d-bfad-407a-a663-9527d10a6586",
-			CPUs:      payloads.CPUs{Max: 2},
-			Memory:    payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
+			NameLabel:  "pool-2-node-1",
+			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
+			Container:  "8af7110d-bfad-407a-a663-9527d10a6586",
+			CPUs:       payloads.CPUs{Max: 2},
+			Memory:     payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			PowerState: "Halted",
 		}, nil).AnyTimes()
 
 	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf(`API error: 404 Not Found - {
@@ -114,6 +116,18 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 		expectedError string
 		expected      bool
 	}{
+		{
+			msg: "EmptyProviderID",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-node-1",
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: "",
+				},
+			},
+			expected: true,
+		},
 		{
 			msg: "NodeForeignProviderID",
 			node: &v1.Node{
@@ -149,8 +163,7 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
 				},
 			},
-			expected:      false,
-			expectedError: cloudprovider.InstanceNotFound.Error(),
+			expected: false,
 		},
 		{
 			msg: "NodeExists",
@@ -197,15 +210,24 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 
 // nolint:dupl
 func (ts *ccmTestSuite) TestInstanceShutdown() {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-
 	tests := []struct {
 		msg           string
 		node          *v1.Node
 		expectedError string
 		expected      bool
 	}{
+		{
+			msg: "EptyProviderID",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-node-1",
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: "",
+				},
+			},
+			expected: false,
+		},
 		{
 			msg: "NodeForeignProviderID",
 			node: &v1.Node{
@@ -214,18 +236,6 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "foreign://provider-id",
-				},
-			},
-			expected: false,
-		},
-		{
-			msg: "NodeWrongCluster",
-			node: &v1.Node{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-3-node-1",
-				},
-				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d/550e8400-e29b-41d4-a716-446655440001",
 				},
 			},
 			expected: false,
@@ -241,7 +251,7 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 				},
 			},
 			expected:      false,
-			expectedError: "vm '500' not found",
+			expectedError: "vm not found: xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
 		},
 		{
 			msg: "NodeExists",
@@ -264,80 +274,27 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 			msg: "NodeExistsStopped",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-3",
+					Name: "cluster-1-node-2",
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d/550e8400-e29b-41d4-a716-446655440001",
+					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d/550e8400-e29b-41d4-a716-446655440002",
 				},
 			},
 			expected: true,
 		},
-		{
-			msg: "NodeExistsWithDifferentName",
-			node: &v1.Node{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-3",
-				},
-				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
-				},
-				Status: v1.NodeStatus{
-					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "8af7110d-bfad-407a-a663-9527d10a6583",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			msg: "NodeExistsWithDifferentUUID",
-			node: &v1.Node{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-1",
-				},
-				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
-				},
-				Status: v1.NodeStatus{
-					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "8af7110d-0000-0000-0000-9527d10a6583",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			msg: "NodeExistsWithDifferentNameAndUUID",
-			node: &v1.Node{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-3",
-				},
-				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
-				},
-				Status: v1.NodeStatus{
-					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "8af7110d-0000-0000-0000-9527d10a6583",
-					},
-				},
-			},
-			expected: false,
-		},
 	}
 
 	for _, testCase := range tests {
-		testCase := testCase
-
 		ts.Run(fmt.Sprint(testCase.msg), func() {
-			exists, err := ts.i.InstanceShutdown(context.Background(), testCase.node)
+			stopped, err := ts.i.InstanceShutdown(context.Background(), testCase.node)
 
 			if testCase.expectedError != "" {
 				ts.Require().Error(err)
-				ts.Require().False(exists)
+				ts.Require().False(stopped)
 				ts.Require().Contains(err.Error(), testCase.expectedError)
 			} else {
 				ts.Require().NoError(err)
-				ts.Require().Equal(testCase.expected, exists)
+				ts.Require().Equal(testCase.expected, stopped)
 			}
 		})
 	}
@@ -354,13 +311,22 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 		expected      *cloudprovider.InstanceMetadata
 	}{
 		{
+			msg: "NodeEmptyProviderAndSystemUUID",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-node-1",
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: "",
+				},
+			},
+			expectedError: "instances.InstanceMetadata() - failed to find instance by uuid test-node-1: node SystemUUID is empty: foreign providerID or empty \"\", skipped",
+		},
+		{
 			msg: "NodeForeignProviderID",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node-1",
-					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.4",
-					},
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "foreign://provider-id",
@@ -373,9 +339,6 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pool-3-node-1",
-					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.4",
-					},
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d/550e8400-e29b-41d4-a716-446655440001",
@@ -389,9 +352,6 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pool-1-node-500",
-					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.4",
-					},
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
