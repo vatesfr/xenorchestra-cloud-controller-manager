@@ -8,7 +8,7 @@ metadata:
     helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.3
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/version: "v0.0.4"
     app.kubernetes.io/managed-by: Helm
   namespace: kube-system
 ---
@@ -21,7 +21,7 @@ metadata:
     helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.3
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/version: "v0.0.4"
     app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups:
@@ -109,7 +109,7 @@ metadata:
     helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.3
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/version: "v0.0.4"
     app.kubernetes.io/managed-by: Helm
   namespace: kube-system
 spec:
@@ -146,7 +146,7 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-          image: "ghcr.io/vatesfr/xenorchestra-cloud-controller-manager:v0.0.3"
+          image: "ghcr.io/vatesfr/xenorchestra-cloud-controller-manager:v0.0.4"
           imagePullPolicy: IfNotPresent
           args:
             - --v=2

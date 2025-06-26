@@ -1,4 +1,25 @@
 
+<a name="v0.0.4"></a>
+## [v0.0.4](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.3...v0.0.4) (2025-06-26)
+
+Welcome to the v0.0.4 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- cloud-node-lifecycle and improve tests
+
+### Features
+
+- **chart:** Add hostnetwork value  for the CCM deployment
+
+### Changelog
+
+* 7a3804a build(chart): bump version
+* 3a7b6a8 feat(chart): Add hostnetwork value  for the CCM deployment
+* 9b25da1 build(lint): Fix yaml linting and add make cmd
+* 8415b9e fix: cloud-node-lifecycle and improve tests
+* b31eabc docs: Update installation method with Helm chart.
+
 <a name="v0.0.3"></a>
 ## [v0.0.3](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.2...v0.0.3) (2025-06-24)
 
@@ -10,7 +31,7 @@ Welcome to the v0.0.3 release of Kubernetes cloud controller manager for Xen Orc
 
 ### Changelog
 
-* 5537550 chore: release v0.0.3
+* 6bc1196 chore: release v0.0.3
 * 5775779 build(deps): bump golang dependencies
 * 77478a3 fix(chart): wrong config filename
 * 4a45836 chore: release v0.0.2 (to generate Chart)
