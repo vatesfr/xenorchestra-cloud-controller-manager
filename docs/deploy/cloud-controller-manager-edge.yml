@@ -1,0 +1,209 @@
+---
+# Source: xenorchestra-cloud-controller-manager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: xenorchestra-cloud-controller-manager
+  labels:
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.2
+    app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/managed-by: Helm
+  namespace: kube-system
+---
+# Source: xenorchestra-cloud-controller-manager/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:xenorchestra-cloud-controller-manager
+  labels:
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.2
+    app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - create
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/status
+    verbs:
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts/token
+    verbs:
+      - create
+---
+# Source: xenorchestra-cloud-controller-manager/templates/rolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:xenorchestra-cloud-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:xenorchestra-cloud-controller-manager
+subjects:
+  - kind: ServiceAccount
+    name: xenorchestra-cloud-controller-manager
+    namespace: kube-system
+---
+# Source: xenorchestra-cloud-controller-manager/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: system:xenorchestra-cloud-controller-manager:extension-apiserver-authentication-reader
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+  - kind: ServiceAccount
+    name: xenorchestra-cloud-controller-manager
+    namespace: kube-system
+---
+# Source: xenorchestra-cloud-controller-manager/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xenorchestra-cloud-controller-manager
+  labels:
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.2
+    app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/version: "v0.0.3"
+    app.kubernetes.io/managed-by: Helm
+  namespace: kube-system
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+      app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+  template:
+    metadata:
+      annotations:
+      labels:
+        app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+        app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+    spec:
+      enableServiceLinks: false
+      priorityClassName: system-cluster-critical
+      serviceAccountName: xenorchestra-cloud-controller-manager
+      securityContext:
+        fsGroup: 10258
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 10258
+        runAsNonRoot: true
+        runAsUser: 10258
+      initContainers: []
+      containers:
+        - name: xenorchestra-cloud-controller-manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          image: "ghcr.io/vatesfr/xenorchestra-cloud-controller-manager:edge"
+          imagePullPolicy: Always
+          args:
+            - --v=4
+            - --cloud-provider=xenorchestra
+            - --cloud-config=/etc/xenorchestra/config.yaml
+            - --controllers=cloud-node,cloud-node-lifecycle
+            - --leader-elect-resource-name=cloud-controller-manager-xenorchestra
+            - --use-service-account-credentials
+            - --secure-port=10258
+            - --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
+          ports:
+            - name: metrics
+              containerPort: 10258
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+              scheme: HTTPS
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+          volumeMounts:
+            - name: cloud-config
+              mountPath: /etc/xenorchestra
+              readOnly: true
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+                    app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+                topologyKey: topology.kubernetes.io/zone
+              weight: 1
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        - effect: NoSchedule
+          key: node.cloudprovider.kubernetes.io/uninitialized
+          operator: Exists
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+              app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+      volumes:
+        - name: cloud-config
+          secret:
+            secretName: xenorchestra-cloud-controller-manager
+            defaultMode: 416

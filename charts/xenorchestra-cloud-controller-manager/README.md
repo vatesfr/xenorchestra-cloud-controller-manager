@@ -107,3 +107,4 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | affinity | object | `{}` | Affinity for data pods assignment. ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity |
 | extraVolumes | list | `[]` | Additional volumes for Pods |
 | extraVolumeMounts | list | `[]` | Additional volume mounts for Pods |
+| useHostNetwork | bool | `false` | Host networking requested for the CCM Pod |
