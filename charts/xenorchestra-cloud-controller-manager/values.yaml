@@ -22,7 +22,8 @@ extraEnvs: []
   #   value: 127.0.0.1
 
 # -- Any extra arguments for xenorchestra-cloud-controller-manager
-extraArgs: [] # - --cluster-name=kubernetes
+extraArgs: []
+# --cluster-name=kubernetes
 
 # -- List of controllers should be enabled.
 # Use '*' to enable all controllers.
@@ -117,8 +118,9 @@ updateStrategy:
     maxUnavailable: 1
 
 # -- Node labels for data pods assignment.
-# ref: https://kubernetes.io/docs/user-guide/node-selection/
-nodeSelector: {} # node-role.kubernetes.io/control-plane: ""
+#  ref: https://kubernetes.io/docs/user-guide/node-selection/
+nodeSelector: {}
+# node-role.kubernetes.io/control-plane: ""
 
 # -- Tolerations for data pods assignment.
 # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/

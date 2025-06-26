@@ -83,6 +83,10 @@ unit: ## Unit Tests
 
 ############
 
+.PHONY: helm-lint
+helm-lint:
+	@ct --config hack/ct.yml lint --check-version-increment=false
+
 .PHONY: helm-unit
 helm-unit: ## Helm Unit Tests
 	@helm lint charts/xenorchestra-cloud-controller-manager

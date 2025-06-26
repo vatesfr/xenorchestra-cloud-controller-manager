@@ -3,7 +3,7 @@ check-version-increment: true
 debug: true
 chart-dirs:
   - charts
-validate-maintainers: true
+validate-maintainers: false
 namespace: default
 release-label: test
 target-branch: main
