@@ -42,7 +42,7 @@ DiYBFavJwf9GODZqQJs23eAx9eh3KlsRhBi8RcoX0KM
 
 ## Deploy CCM
 
-Create the Xen Orchestra credentials config file:
+Create the Xen Orchestra credentials config file `config.yaml`:
 
 ```yaml
 # Url the Xen Orchestra API
@@ -54,10 +54,10 @@ token: "123ABC"
 
 ### Method 1: kubectl
 
-Upload it to the kubernetes:
+Create a secret into the kubernetes, from the `config.yaml` file:
 
 ```shell
-kubectl -n kube-system create secret generic xenorchestra-cloud-controller-manager --from-file=xo-config.yaml
+kubectl -n kube-system create secret generic xenorchestra-cloud-controller-manager --from-file=config.yaml
 ```
 
 Deploy Xen Orchestra CCM with `cloud-node,cloud-node-lifecycle` controllers
@@ -90,7 +90,7 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yml \
     oci://ghcr.io/vatesfr/charts/xenorchestra-cloud-controller-manager
 ```
 
-More options you can find [here](charts/xenorchestra-cloud-controller-manager)
+More options you can find [here](../charts/xenorchestra-cloud-controller-manager/README.md#values)
 
 ## Troubleshooting
 
