@@ -20,6 +20,7 @@ extraEnvs:
 enabledControllers:
   - cloud-node
   - cloud-node-lifecycle
+  - cloud-node-label-sync
 
 config:
   url: https://xoa.example.com

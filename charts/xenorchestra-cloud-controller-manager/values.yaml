@@ -27,10 +27,11 @@ extraArgs: []
 
 # -- List of controllers should be enabled.
 # Use '*' to enable all controllers.
-# Support only `cloud-node,cloud-node-lifecycle` controllers.
+# Support only `cloud-node,cloud-node-lifecycle,cloud-node-label-sync` controllers.
 enabledControllers:
   - cloud-node
   - cloud-node-lifecycle
+  - cloud-node-label-sync
   # - route
   # - service
 
