@@ -26,8 +26,8 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-// XOConfig is Xen Orchestra cloud config.
-type XOConfig struct {
+// xoConfig is Xen Orchestra cloud config.
+type xoConfig struct {
 	URL      string `yaml:"url"`
 	Insecure bool   `yaml:"insecure,omitempty"`
 	Username string `yaml:"username,omitempty"`
@@ -36,38 +36,38 @@ type XOConfig struct {
 	// Do we need to set the pool IDs?
 }
 
-// ReadCloudConfig reads cloud config from a reader.
-func ReadCloudConfig(config io.Reader) (XOConfig, error) {
-	cfg := XOConfig{}
+// readCloudConfig reads cloud config from a reader.
+func readCloudConfig(config io.Reader) (xoConfig, error) {
+	cfg := xoConfig{}
 
 	if config != nil {
 		if err := yaml.NewDecoder(config).Decode(&cfg); err != nil {
-			return XOConfig{}, err
+			return xoConfig{}, err
 		}
 	}
 
 	if cfg.Username != "" && cfg.Password != "" {
 		if cfg.Token != "" {
-			return XOConfig{}, fmt.Errorf("token is not allowed when username and password are set")
+			return xoConfig{}, fmt.Errorf("token is not allowed when username and password are set")
 		}
 	} else if cfg.Token == "" {
-		return XOConfig{}, fmt.Errorf("either token or username/password are required for authentication")
+		return xoConfig{}, fmt.Errorf("either token or username/password are required for authentication")
 	}
 
 	if cfg.URL == "" || !strings.HasPrefix(cfg.URL, "http") {
-		return XOConfig{}, fmt.Errorf("url is required")
+		return xoConfig{}, fmt.Errorf("url is required")
 	}
 
 	return cfg, nil
 }
 
-// ReadCloudConfigFromFile reads cloud config from a file.
-func ReadCloudConfigFromFile(file string) (XOConfig, error) {
+// readCloudConfigFromFile reads cloud config from a file.
+func readCloudConfigFromFile(file string) (xoConfig, error) {
 	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
-		return XOConfig{}, fmt.Errorf("error reading %s: %v", file, err)
+		return xoConfig{}, fmt.Errorf("error reading %s: %v", file, err)
 	}
 	defer f.Close() // nolint: errcheck
 
-	return ReadCloudConfig(f)
+	return readCloudConfig(f)
 }

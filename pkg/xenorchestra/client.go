@@ -33,14 +33,14 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// XOClient is a Xen Orchestra client.
-type XOClient struct {
-	config *XOConfig
+// xoClient is a Xen Orchestra client.
+type xoClient struct {
+	config *xoConfig
 	Client library.Library
 }
 
-// NewInstance creates a new Xen Orchestra client.
-func NewInstance(cfg *XOConfig) (*XOClient, error) {
+// newXOClient creates a new Xen Orchestra client.
+func newXOClient(cfg *xoConfig) (*xoClient, error) {
 	// Replace the http/https in the URL with ws/wss
 	// to use WebSocket for the connection.
 	// This is required for the Xen Orchestra API to work correctly.
@@ -65,19 +65,19 @@ func NewInstance(cfg *XOConfig) (*XOClient, error) {
 
 	client, err := v2.New(xoConfig)
 	if err != nil {
-		klog.Errorf("Failed to create XO client: %v", err)
+		klog.Errorf("Failed to create Xen Orchestra client: %v", err)
 
 		return nil, err
 	}
 
-	return &XOClient{
+	return &xoClient{
 		config: cfg,
 		Client: client,
 	}, nil
 }
 
-// CheckInstance checks if the Xen Orchestra connection is working.
-func (c *XOClient) CheckInstance(ctx context.Context) error {
+// CheckClient checks if the Xen Orchestra connection is working.
+func (c *xoClient) CheckClient(ctx context.Context) error {
 	vms, err := c.Client.VM().List(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get list of VMs, error: %v", err)
@@ -94,7 +94,7 @@ func (c *XOClient) CheckInstance(ctx context.Context) error {
 
 // FindVMByNode find a VM by kubernetes node resource in Xen Orchestra.
 // It returns the VM, the pool ID (region) and an error if any.
-func (c *XOClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payloads.VM, poolID uuid.UUID, err error) {
+func (c *xoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payloads.VM, poolID uuid.UUID, err error) {
 	var vmID uuid.UUID
 	if node.Status.NodeInfo.SystemUUID == "" {
 		vmID, err = provider.GetVMID(node.Spec.ProviderID)
@@ -121,7 +121,7 @@ func (c *XOClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payload
 }
 
 // FindVMByName find a VM by name in Xen Orchestra (all pools).
-func (c *XOClient) FindVMByName(ctx context.Context, name string) (*payloads.VM, uuid.UUID, error) {
+func (c *xoClient) FindVMByName(ctx context.Context, name string) (*payloads.VM, uuid.UUID, error) {
 	vmClient := c.Client.VM()
 
 	allVms, err := vmClient.List(ctx)

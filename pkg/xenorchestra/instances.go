@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/gofrs/uuid"
 
@@ -33,11 +32,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-type instances struct {
-	c *XOClient
+// XOInstances defines the interface for VM instance operations
+type XOInstances interface {
+	// GetInstance returns the VM reference for the given node.
+	GetInstance(ctx context.Context, node *v1.Node) (*payloads.VM, error)
+	cloudprovider.InstancesV2
 }
 
-func newInstances(client *XOClient) *instances {
+type instances struct {
+	c *xoClient
+}
+
+func newInstances(client *xoClient) *instances {
 	return &instances{
 		c: client,
 	}
@@ -60,7 +66,7 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 		return true, nil
 	}
 
-	if _, err := i.getInstance(ctx, node); err != nil {
+	if _, err := i.GetInstance(ctx, node); err != nil {
 		if err == cloudprovider.InstanceNotFound {
 			klog.V(4).InfoS("instances.InstanceExists() instance not found", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
@@ -90,7 +96,7 @@ func (i *instances) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, 
 		return false, nil
 	}
 
-	vmr, err := i.getInstance(ctx, node)
+	vmr, err := i.GetInstance(ctx, node)
 	if err != nil {
 		if err == cloudprovider.InstanceNotFound {
 			klog.InfoS("instances.InstanceShutdown() instance not found, is it deleted?", "providerID", node.Spec.ProviderID)
@@ -139,7 +145,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 	}
 
 	if vmRef == nil {
-		vmRef, err = i.getInstance(ctx, node)
+		vmRef, err = i.GetInstance(ctx, node)
 		if err != nil {
 			return nil, err
 		}
@@ -155,13 +161,13 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 
 	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeHostName, Address: node.Name})
 
-	instanceType := i.getInstanceType(ctx, vmRef)
+	instanceType := getInstanceType(vmRef)
 
 	return &cloudprovider.InstanceMetadata{
 		AdditionalLabels: map[string]string{
-			"vm.k8s.xenorchestra/name_label":    sanitizeToLabel(vmRef.NameLabel),
-			"topology.k8s.xenorchestra/pool_id": sanitizeToLabel(vmRef.PoolID.String()),
-			"topology.k8s.xenorchestra/host_id": sanitizeToLabel(vmRef.Container),
+			XOLabelVmNameLabel:    sanitizeToLabel(vmRef.NameLabel),
+			XOLabelTopologyPoolID: sanitizeToLabel(vmRef.PoolID.String()),
+			XOLabelTopologyHostID: sanitizeToLabel(vmRef.Container),
 			// TODO: Add pool nameLabel and host nameLabel: requires XO SDK additional features
 		},
 		ProviderID:    providerID,
@@ -173,7 +179,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 }
 
 // getInstance returns the VM reference, and error for the given node.
-func (i *instances) getInstance(ctx context.Context, node *v1.Node) (*payloads.VM, error) {
+func (i *instances) GetInstance(ctx context.Context, node *v1.Node) (*payloads.VM, error) {
 	klog.V(4).InfoS("instances.getInstance() called", "node", klog.KRef("", node.Name))
 
 	nodeRef, poolID, err := provider.ParseProviderID(node.Spec.ProviderID)
@@ -202,45 +208,4 @@ func (i *instances) getInstance(ctx context.Context, node *v1.Node) (*payloads.V
 	klog.V(5).Infof("instances.getInstance() vm %+v", vm)
 
 	return vm, nil
-}
-
-// getInstanceType returns the instance type for the given VM.
-// It returns the instance type name if it matches the expected format, otherwise it returns a formatted string
-// returns: the instance type name or a formatted string with vCPU and memory, and an error if any
-func (i *instances) getInstanceType(_ context.Context, vm *payloads.VM) string {
-	memory := vm.Memory.Size / (1024 * 1024 * 1024)
-
-	return fmt.Sprintf("%.0fVCPU-%.0fGB",
-		float64(vm.CPUs.Max),
-		float64(memory))
-}
-
-// sanitizeToLabel replaces characters in a string so that it matches the regex:
-// (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
-// and truncates to 63 chars.
-func sanitizeToLabel(s string) string {
-	// Replace all invalid chars with '-'
-	var b strings.Builder
-
-	for _, r := range s {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.' {
-			b.WriteRune(r)
-		} else {
-			b.WriteRune('-')
-		}
-	}
-
-	out := b.String()
-
-	// Remove leading and trailing non-alphanumeric
-	out = strings.TrimFunc(out, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-
-	const maxLen = 63
-	if len(out) > maxLen {
-		out = out[:maxLen]
-	}
-
-	return out
 }

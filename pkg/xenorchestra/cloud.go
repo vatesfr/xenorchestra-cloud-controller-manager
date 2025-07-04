@@ -23,7 +23,6 @@ import (
 
 	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 
-	clientkubernetes "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -37,8 +36,7 @@ const (
 )
 
 type cloud struct {
-	client      *XOClient
-	kclient     clientkubernetes.Interface
+	client      *xoClient
 	instancesV2 cloudprovider.InstancesV2
 
 	ctx  context.Context //nolint:containedctx
@@ -47,7 +45,7 @@ type cloud struct {
 
 func init() {
 	cloudprovider.RegisterCloudProvider(provider.ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := ReadCloudConfig(config)
+		cfg, err := readCloudConfig(config)
 		if err != nil {
 			klog.ErrorS(err, "failed to read config")
 
@@ -58,8 +56,8 @@ func init() {
 	})
 }
 
-func newCloud(config *XOConfig) (cloudprovider.Interface, error) {
-	client, err := NewInstance(config)
+func newCloud(config *xoConfig) (cloudprovider.Interface, error) {
+	client, err := newXOClient(config)
 	if err != nil {
 		return nil, err
 	}
@@ -76,17 +74,15 @@ func newCloud(config *XOConfig) (cloudprovider.Interface, error) {
 // to perform housekeeping or run custom controllers specific to the cloud provider.
 // Any tasks started here should be cleaned up when the stop channel closes.
 func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
-	c.kclient = clientBuilder.ClientOrDie(ServiceAccountName)
-
 	klog.InfoS("clientset initialized")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c.ctx = ctx
 	c.stop = cancel
 
-	err := c.client.CheckInstance(ctx)
+	err := c.client.CheckClient(ctx)
 	if err != nil {
-		klog.ErrorS(err, "failed to check Xen Orchestra instance")
+		klog.ErrorS(err, "failed to check Xen Orchestra client")
 	}
 
 	// Broadcast the upstream stop signal to all provider-level goroutines
@@ -97,7 +93,7 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 		provider.stop()
 	}(c)
 
-	klog.InfoS("xen orchestra initialized")
+	klog.InfoS("Xen Orchestra client initialized")
 }
 
 // LoadBalancer returns a balancer interface.

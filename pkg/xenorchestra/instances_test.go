@@ -94,7 +94,7 @@ func (ts *ccmTestSuite) SetupTest() {
 	mockLib.EXPECT().VM().Return(mockVM).AnyTimes()
 
 	// Inject mock into XOClient
-	client := &XOClient{
+	client := &xoClient{
 		Client: mockLib,
 	}
 	ts.i = newInstances(client)
@@ -387,7 +387,7 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 						Address: "pool-1-node-1",
 					},
 				},
-				InstanceType: "4VCPU-10GB",
+				InstanceType: "4vCPU-10GB",
 				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
 				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
 				AdditionalLabels: map[string]string{
@@ -428,7 +428,7 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 						Address: "pool-1-node-1",
 					},
 				},
-				InstanceType: "4VCPU-10GB",
+				InstanceType: "4vCPU-10GB",
 				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
 				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
 				AdditionalLabels: map[string]string{

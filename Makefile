@@ -70,7 +70,7 @@ build: ## Build
 
 .PHONY: run
 run: build ## Run
-	./bin/xenorchestra-cloud-controller-manager-$(ARCH) --v=5 --kubeconfig=$(HOME)/.kube/config --cloud-config=xo-config.yaml --controllers=cloud-node,cloud-node-lifecycle \
+	./bin/xenorchestra-cloud-controller-manager-$(ARCH) --v=5 --kubeconfig=$(HOME)/.kube/config --cloud-config=xo-config.yaml --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync \
 		--use-service-account-credentials --leader-elect=false --bind-address=127.0.0.1 --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
 
 .PHONY: lint

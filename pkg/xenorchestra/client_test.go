@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package xenorchestra_test
+package xenorchestra
 
 import (
 	"fmt"
@@ -24,14 +24,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	xenorchestra "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 	mock_library "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra/mocks"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 )
 
-// func newInstanceEnv() (*xenorchestra.XOConfig, error) {
+// func newInstanceEnv() (*XOConfig, error) {
 // 	// TODO: replace with real test environment variables or configuration
-// 	cfg, err := xenorchestra.ReadCloudConfig(strings.NewReader(`
+// 	cfg, err := readCloudConfig(strings.NewReader(`
 // url: http://127.0.0.1:9000
 // token: "secret"
 // insecure: true
@@ -40,7 +39,7 @@ import (
 // 	return &cfg, err
 // }
 
-func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *xenorchestra.XOClient {
+func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *xoClient {
 	// Mock VM service
 	mockVM := mock_library.NewMockVM(ctrl)
 	mockVM.EXPECT().List(gomock.Any()).Return([]*payloads.VM{
@@ -60,7 +59,7 @@ func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *xenorchestra.XOCl
 	mockLib.EXPECT().VM().Return(mockVM).AnyTimes()
 
 	// Inject mock into XOClient
-	return &xenorchestra.XOClient{
+	return &xoClient{
 		Client: mockLib,
 	}
 }
@@ -83,7 +82,7 @@ func TestCheckInstance(t *testing.T) {
 	defer ctrl.Finish()
 
 	client := newMockedVMClient(t, ctrl)
-	err := client.CheckInstance(t.Context())
+	err := client.CheckClient(t.Context())
 	assert.Nil(t, err)
 }
 
@@ -133,8 +132,6 @@ func TestFindVMByNameExist(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		testCase := testCase
-
 		t.Run(fmt.Sprint(testCase.msg), func(t *testing.T) {
 			vmr, poolID, err := client.FindVMByName(t.Context(), testCase.vmName)
 
