@@ -3,11 +3,14 @@
 Xen Orchestra Cloud Controller Manager (CCM) supports controllers:
 * cloud-node
 * cloud-node-lifecycle
+* cloud-node-label-sync
 
 `cloud-node` - detects new node launched in the cluster and registers them in the cluster.
 Assigns labels and taints based on Xen Orchestra VM configuration.
 
 `cloud-node-lifecycle` - detects node deletion on Xen Orchestra side and removes them from the cluster.
+
+`cloud-node-label-sync` - syncs labels from Xen Orchestra VM to Kubernetes node.
 
 ## Requirements
 
@@ -60,7 +63,7 @@ Upload it to the kubernetes:
 kubectl -n kube-system create secret generic xenorchestra-cloud-controller-manager --from-file=xo-config.yaml
 ```
 
-Deploy Xen Orchestra CCM with `cloud-node,cloud-node-lifecycle` controllers
+Deploy Xen Orchestra CCM with `cloud-node,cloud-node-lifecycle,cloud-node-label-sync` controllers
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/vatesfr/xenorchestra-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
