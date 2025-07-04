@@ -14,30 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package xenorchestra_test
+package xenorchestra
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	xenorchestra "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 )
 
 func TestReadCloudConfig(t *testing.T) {
-	cfg, err := xenorchestra.ReadCloudConfig(nil)
+	cfg, err := readCloudConfig(nil)
 	assert.NotNil(t, err)
 	assert.NotNil(t, cfg)
 
 	// Empty config
-	cfg, err = xenorchestra.ReadCloudConfig(strings.NewReader(`
+	cfg, err = readCloudConfig(strings.NewReader(`
 `))
 	assert.NotNil(t, err)
 	assert.NotNil(t, cfg)
 
 	// Wrong config
-	cfg, err = xenorchestra.ReadCloudConfig(strings.NewReader(`
+	cfg, err = readCloudConfig(strings.NewReader(`
 test: false
 `))
 
@@ -45,7 +43,7 @@ test: false
 	assert.NotNil(t, cfg)
 
 	// Non full config
-	cfg, err = xenorchestra.ReadCloudConfig(strings.NewReader(`
+	cfg, err = readCloudConfig(strings.NewReader(`
 url: abcd
 token: 123ABC
 `))
@@ -54,7 +52,7 @@ token: 123ABC
 	assert.NotNil(t, cfg)
 
 	// Valid config with one cluster
-	cfg, err = xenorchestra.ReadCloudConfig(strings.NewReader(`
+	cfg, err = readCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 token: "123ABC"
@@ -63,7 +61,7 @@ token: "123ABC"
 	assert.NotNil(t, cfg)
 
 	// Valid config with one cluster (username/password)
-	cfg, err = xenorchestra.ReadCloudConfig(strings.NewReader(`
+	cfg, err = readCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 username: "user@pam"
@@ -74,12 +72,12 @@ password: "secret"
 }
 
 func TestReadCloudConfigFromFile(t *testing.T) {
-	cfg, err := xenorchestra.ReadCloudConfigFromFile("testdata/cloud-config.yaml")
+	cfg, err := readCloudConfigFromFile("testdata/cloud-config.yaml")
 	assert.NotNil(t, err)
 	assert.EqualError(t, err, "error reading testdata/cloud-config.yaml: open testdata/cloud-config.yaml: no such file or directory")
 	assert.NotNil(t, cfg)
 
-	cfg, err = xenorchestra.ReadCloudConfigFromFile("../../hack/xo-config.yaml")
+	cfg, err = readCloudConfigFromFile("../../hack/xo-config.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, cfg)
 }

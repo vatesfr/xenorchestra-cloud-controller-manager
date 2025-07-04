@@ -17,9 +17,10 @@ Support controllers:
 * cloud-node
   * Updates node resource.
   * Assigns labels and taints based on Xen Orchestra VM configuration.
-// TODO:
 * cloud-node-lifecycle
   * Cleans up node resource when Xen Orchestra VM is deleted.
+*cloud-node-label-sync
+  * Syncs labels from Xen Orchestra VM to Kubernetes node.
 
 ## Example
 
@@ -40,7 +41,7 @@ kind: Node
 metadata:
   labels:
     # Type generated base on CPU and RAM
-    node.kubernetes.io/instance-type: 2VCPU-1GB
+    node.kubernetes.io/instance-type: 2vCPU-1GB
     # Xen Orchestra Pool ID of the node VM Host
     topology.kubernetes.io/region: 3679fe1a-d058-4055-b800-d30e1bd2af48
     # Xen Orchestra ID of the node VM Host

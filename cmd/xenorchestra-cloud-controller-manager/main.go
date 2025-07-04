@@ -29,6 +29,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/controllers/nodelabelsync"
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -51,7 +52,15 @@ func main() {
 	}
 
 	controllerInitializers := app.DefaultInitFuncConstructors
+	controllerInitializers[nodelabelsync.ControllerName] = app.ControllerInitFuncConstructor{
+		InitContext: app.ControllerInitContext{
+			ClientName: "node-controller",
+		},
+		Constructor: nodelabelsync.StartNodeLabelSyncControllerWrapper,
+	}
+
 	controllerAliases := names.CCMControllerAliases()
+	controllerAliases[nodelabelsync.ControllerAlias] = nodelabelsync.ControllerName
 	// Here is an example to remove the controller which is not needed.
 	// e.g. remove the cloud-node-lifecycle controller which current cloud provider does not need.
 	delete(controllerInitializers, "service-lb")
