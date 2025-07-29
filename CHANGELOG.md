@@ -1,4 +1,26 @@
 
+<a name="v0.1.0"></a>
+## [v0.1.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.4...v0.1.0) (2025-07-04)
+
+Welcome to the v0.1.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- installation doc, fix link to more values
+
+### Features
+
+- add cloud-node-label-sync into chart and deployments
+- add cloud-node-label-sync controller to sync labels with actual XO VM state
+
+### Changelog
+
+* dea32aa build: bump chart version
+* 09320f1 feat: add cloud-node-label-sync into chart and deployments
+* 6389856 feat: add cloud-node-label-sync controller to sync labels with actual XO VM state
+* 64598d1 chg: installation doc, using kubectl, rename config to config.yaml, fix command lines.
+* 5d3846f fix: installation doc, fix link to more values
+
 <a name="v0.0.4"></a>
 ## [v0.0.4](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.3...v0.0.4) (2025-06-26)
 
@@ -14,6 +36,7 @@ Welcome to the v0.0.4 release of Kubernetes cloud controller manager for Xen Orc
 
 ### Changelog
 
+* 50039dd chore: release v0.0.4
 * 7a3804a build(chart): bump version
 * 3a7b6a8 feat(chart): Add hostnetwork value  for the CCM deployment
 * 9b25da1 build(lint): Fix yaml linting and add make cmd
