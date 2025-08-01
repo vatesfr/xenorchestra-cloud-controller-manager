@@ -6,7 +6,7 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/jarcoal/httpmock v1.4.0
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
 	github.com/vatesfr/xenorchestra-go-sdk v1.3.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -15,6 +15,7 @@ require (
 	k8s.io/client-go v0.33.2
 	k8s.io/cloud-provider v0.33.2
 	k8s.io/component-base v0.33.2
+	k8s.io/controller-manager v0.33.2
 	k8s.io/klog/v2 v2.130.1
 )
 
@@ -103,7 +104,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	k8s.io/apiserver v0.33.2 // indirect
 	k8s.io/component-helpers v0.33.2 // indirect
-	k8s.io/controller-manager v0.33.2 // indirect
 	k8s.io/kms v0.33.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979 // indirect
