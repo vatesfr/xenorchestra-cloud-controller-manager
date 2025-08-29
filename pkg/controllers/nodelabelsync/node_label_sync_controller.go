@@ -6,13 +6,17 @@ import (
 
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	"k8s.io/apimachinery/pkg/labels"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
+	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
@@ -30,8 +34,10 @@ const (
 // Controller periodically syncs node labels from Xen Orchestra
 // based on the logic in InstanceMetadata.
 type Controller struct {
-	nodeInformer coreinformers.NodeInformer
-	kubeClient   clientset.Interface
+	nodeInformer     coreinformers.NodeInformer
+	eventBroadcaster record.EventBroadcaster
+	recorder         record.EventRecorder
+	kubeClient       clientset.Interface
 
 	nodesLister        corelisters.NodeLister
 	nodeInformerSynced cache.InformerSynced
@@ -55,6 +61,7 @@ func startNodeLabelSyncController(ctx context.Context, initContext app.Controlle
 ) (controller.Interface, bool, error) {
 	// Start the CloudNodeController
 	nodeController, err := NewNodeLabelSyncController(
+		ctx,
 		completedConfig.SharedInformers.Core().V1().Nodes(),
 		// cloud node controller uses existing cluster role from node-controller
 		completedConfig.ClientBuilder.ClientOrDie(initContext.ClientName),
@@ -75,6 +82,7 @@ func startNodeLabelSyncController(ctx context.Context, initContext app.Controlle
 }
 
 func NewNodeLabelSyncController(
+	ctx context.Context,
 	nodeInformer coreinformers.NodeInformer,
 	kubeClient clientset.Interface,
 	cloud cloudprovider.Interface,
@@ -83,9 +91,13 @@ func NewNodeLabelSyncController(
 ) (*Controller, error) {
 	instances, _ := cloud.InstancesV2()
 
+	eventBroadcaster := record.NewBroadcaster(record.WithContext(ctx))
+
 	return &Controller{
 		nodeInformer:              nodeInformer,
 		kubeClient:                kubeClient,
+		eventBroadcaster:          eventBroadcaster,
+		recorder:                  eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: ControllerName}),
 		cloud:                     cloud,
 		nodesLister:               nodeInformer.Lister(),
 		nodeInformerSynced:        nodeInformer.Informer().HasSynced,
@@ -99,6 +111,11 @@ func (c *Controller) Run(ctx context.Context, interval time.Duration) {
 	stopCh := ctx.Done()
 
 	defer utilruntime.HandleCrash()
+
+	// Start event broadcasting process
+	c.eventBroadcaster.StartStructuredLogging(3)
+	c.eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: c.kubeClient.CoreV1().Events("")})
+	defer c.eventBroadcaster.Shutdown()
 
 	// Wait for the caches to be synced before starting workers
 	klog.Info("Waiting for informer caches to sync")
@@ -143,7 +160,7 @@ func (c *Controller) UpdateNodeLabels(ctx context.Context) error {
 			klog.Errorf("Error getting instance metadata for node label sync: %v", err)
 			return
 		}
-		updateNodeLabels(c.kubeClient, node, instanceMetadata)
+		updateNodeLabels(c.kubeClient, c.recorder, node, instanceMetadata)
 	}
 
 	workqueue.ParallelizeUntil(ctx, int(c.workerCount), len(nodes), updateNodeFunc)

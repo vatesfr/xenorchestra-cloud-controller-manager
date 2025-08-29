@@ -22,6 +22,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
 	cloudproviderapi "k8s.io/cloud-provider/api"
 	cloudnodeutil "k8s.io/cloud-provider/node/helpers"
@@ -29,7 +30,7 @@ import (
 )
 
 // updateNodeLabels updates the labels of a single node
-func updateNodeLabels(kubeClient clientset.Interface, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) {
+func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecorder, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) {
 	klog.V(5).Infof("NodeLabelSyncController.updateNodeLabels(): sync node %s", node.Name)
 	// Do not process nodes that are still tainted
 	cloudTaint := getCloudTaint(node.Spec.Taints)
@@ -64,26 +65,24 @@ func updateNodeLabels(kubeClient clientset.Interface, node *v1.Node, instanceMet
 	// Check if the existing node label for zone differs from the new instance metadata Zone value
 	existingZone, hasZone := nodeLabels[v1.LabelTopologyZone]
 	if hasZone && instanceMetadata.Zone != "" && existingZone != instanceMetadata.Zone {
-		klog.V(2).Infof("Node %s zone label changed (VM host has changed): old=%s, new=%s", node.Name, existingZone, instanceMetadata.Zone)
+		klog.V(2).Infof("Node %s zone has changed (VM host has changed): old=%s, new=%s", node.Name, existingZone, instanceMetadata.Zone)
 		if _, exists := nodeLabels[xenorchestra.XOLabelTopologyOriginalHostID]; !exists {
 			labelsToUpdate[xenorchestra.XOLabelTopologyOriginalHostID] = nodeLabels[v1.LabelTopologyZone]
 		}
 		labelsToUpdate[v1.LabelTopologyZone] = instanceMetadata.Zone
 		labelsToUpdate[v1.LabelFailureDomainBetaZone] = instanceMetadata.Zone
-		// TODO: throw an event to k8s to notify the VM host has changed
 	}
 	/**
 	 * If label "region" changed: The node VM has migrated to another pool
 	 */
 	existingRegion, hasRegion := nodeLabels[v1.LabelTopologyRegion]
 	if hasRegion && instanceMetadata.Region != "" && existingRegion != instanceMetadata.Region {
-		klog.V(2).Infof("Node %s region label changed (VM pool has changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.Region)
+		klog.V(2).Infof("Node %s region has changed (VM pool has changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.Region)
 		if _, exists := nodeLabels[xenorchestra.XOLabelTopologyOriginalPoolID]; !exists {
 			labelsToUpdate[xenorchestra.XOLabelTopologyOriginalPoolID] = nodeLabels[v1.LabelTopologyRegion]
 		}
 		labelsToUpdate[v1.LabelTopologyRegion] = instanceMetadata.Region
 		labelsToUpdate[v1.LabelFailureDomainBetaRegion] = instanceMetadata.Region
-		// TODO: throw an event to k8s to notify the VM pool has changed
 	}
 	// Update VM Type
 	existVMType, hasVMType := nodeLabels[v1.LabelInstanceTypeStable]
@@ -92,17 +91,6 @@ func updateNodeLabels(kubeClient clientset.Interface, node *v1.Node, instanceMet
 		labelsToUpdate[v1.LabelInstanceTypeStable] = instanceMetadata.InstanceType
 		labelsToUpdate[v1.LabelInstanceType] = instanceMetadata.InstanceType
 	}
-
-	// Remove obsolete k8s.xenorchestra labels
-	// FIXME: do not delete added labels like OriginalZone
-	// for key := range nodeLabels {
-	// 	if strings.Contains(key, xenorchestra.XoLabelNamespace) {
-	// 		if _, exists := additionalLabels[key]; !exists {
-	// 			labelsToUpdate[key] = ""
-	// 			klog.V(2).Infof("Removing obsolete node label from XO cloud provider: %s", key)
-	// 		}
-	// 	}
-	// }
 
 	if len(labelsToUpdate) == 0 {
 		klog.V(5).Infof("Skipping node label update for node %q since there are no changes", node.Name)
@@ -113,6 +101,34 @@ func updateNodeLabels(kubeClient clientset.Interface, node *v1.Node, instanceMet
 
 	if !cloudnodeutil.AddOrUpdateLabelsOnNode(kubeClient, labelsToUpdate, node) {
 		klog.Error("error updating labels for the node", "node", klog.KRef("", node.Name))
+		return
+	}
+
+	eventRef := &v1.ObjectReference{
+		APIVersion: "v1",
+		Kind:       "Node",
+		Name:       node.Name,
+		UID:        node.UID,
+		Namespace:  "",
+	}
+	// Node Zone has changed
+	if _, exists := labelsToUpdate[v1.LabelTopologyZone]; exists {
+		// Record an event related to the node VM host that has changed
+		recorder.Eventf(eventRef, v1.EventTypeWarning, "NodeZoneChanged",
+			"Node %s zone changed (node VM host changed): old=%s, new=%s", node.Name, existingZone, instanceMetadata.Zone)
+	}
+	// Node Region has changed
+	if _, exists := labelsToUpdate[v1.LabelTopologyRegion]; exists {
+		// Record an event related to the node VM pool that has changed
+		recorder.Eventf(eventRef, v1.EventTypeWarning, "NodeRegionChanged",
+			"Node %s region changed (node VM pool changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.Region)
+	}
+	// Instance Type has changed
+	if _, exists := labelsToUpdate[v1.LabelInstanceType]; exists {
+		// Record an event related to the node VM type
+		recorder.Eventf(eventRef, v1.EventTypeNormal, "NodeInstanceTypeHasChanged",
+			"Node %s instance type has changed (node VM memory and/or CPUs changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.InstanceType)
+
 	}
 }
 
