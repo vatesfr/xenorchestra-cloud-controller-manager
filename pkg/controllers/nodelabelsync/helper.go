@@ -30,24 +30,18 @@ import (
 )
 
 // updateNodeLabels updates the labels of a single node
-func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecorder, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) {
+func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) map[string]string {
 	klog.V(5).Infof("NodeLabelSyncController.updateNodeLabels(): sync node %s", node.Name)
 	// Do not process nodes that are still tainted
 	cloudTaint := getCloudTaint(node.Spec.Taints)
 	if cloudTaint != nil {
 		klog.V(5).Infof("This node %s is still tainted. Will not process.", node.Name)
-		return
-	}
-
-	additionalLabels := instanceMetadata.AdditionalLabels
-	if len(additionalLabels) == 0 {
-		klog.V(5).Infof("Skipping node label update for node %q since cloud provider did not return any", node.Name)
-		return
+		return nil
 	}
 
 	nodeLabels := node.Labels
 	labelsToUpdate := map[string]string{}
-	for key, value := range additionalLabels {
+	for key, value := range instanceMetadata.AdditionalLabels {
 		if !strings.Contains(key, xenorchestra.XOLabelNamespace) {
 			continue
 		}
@@ -92,17 +86,23 @@ func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecor
 		labelsToUpdate[v1.LabelInstanceType] = instanceMetadata.InstanceType
 	}
 
-	if len(labelsToUpdate) == 0 {
-		klog.V(5).Infof("Skipping node label update for node %q since there are no changes", node.Name)
-		return
-	}
+	return labelsToUpdate
+}
 
-	klog.V(4).InfoS("Updating node labels for node %q", "node", node.Name, "labelsToUpdate", labelsToUpdate)
+func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecorder, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) bool {
+	labelsToUpdate := getNodeLabelUpdate(node, instanceMetadata)
+
+	if len(labelsToUpdate) == 0 {
+		klog.V(5).Infof("Skipping label update for node %q since there are no changes", node.Name)
+		return false
+	}
 
 	if !cloudnodeutil.AddOrUpdateLabelsOnNode(kubeClient, labelsToUpdate, node) {
 		klog.Error("error updating labels for the node", "node", klog.KRef("", node.Name))
-		return
+		return false
 	}
+
+	klog.V(4).InfoS("Updated labels for node %q", "node", node.Name, "labelsToUpdate", labelsToUpdate)
 
 	eventRef := &v1.ObjectReference{
 		APIVersion: "v1",
@@ -113,23 +113,27 @@ func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecor
 	}
 	// Node Zone has changed
 	if _, exists := labelsToUpdate[v1.LabelTopologyZone]; exists {
+		existingZone := node.Labels[v1.LabelTopologyZone]
 		// Record an event related to the node VM host that has changed
 		recorder.Eventf(eventRef, v1.EventTypeWarning, "NodeZoneChanged",
 			"Node %s zone changed (node VM host changed): old=%s, new=%s", node.Name, existingZone, instanceMetadata.Zone)
 	}
 	// Node Region has changed
 	if _, exists := labelsToUpdate[v1.LabelTopologyRegion]; exists {
+		existingRegion := node.Labels[v1.LabelTopologyRegion]
 		// Record an event related to the node VM pool that has changed
 		recorder.Eventf(eventRef, v1.EventTypeWarning, "NodeRegionChanged",
 			"Node %s region changed (node VM pool changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.Region)
 	}
 	// Instance Type has changed
 	if _, exists := labelsToUpdate[v1.LabelInstanceType]; exists {
+		existVMType := node.Labels[v1.LabelInstanceTypeStable]
 		// Record an event related to the node VM type
 		recorder.Eventf(eventRef, v1.EventTypeNormal, "NodeInstanceTypeHasChanged",
-			"Node %s instance type has changed (node VM memory and/or CPUs changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.InstanceType)
+			"Node %s instance type has changed (node VM memory and/or CPUs changed): old=%s, new=%s", node.Name, existVMType, instanceMetadata.InstanceType)
 
 	}
+	return true
 }
 
 func getCloudTaint(taints []v1.Taint) *v1.Taint {
