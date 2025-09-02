@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
 	v1 "k8s.io/api/core/v1"
@@ -205,8 +206,8 @@ func TestUpdateNodeLabels_APIFailure(t *testing.T) {
 	failReactor := func(action k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, fmt.Errorf("simulated API failure")
 	}
-	client.Fake.PrependReactor("patch", "nodes", failReactor)
-	client.Fake.PrependReactor("update", "nodes", failReactor)
+	client.PrependReactor("patch", "nodes", failReactor)
+	client.PrependReactor("update", "nodes", failReactor)
 
 	_, err := client.CoreV1().Nodes().Create(ctx, testNode, metav1.CreateOptions{})
 	if err != nil {
