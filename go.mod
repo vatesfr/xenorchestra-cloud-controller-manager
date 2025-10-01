@@ -7,8 +7,8 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jarcoal/httpmock v1.4.0
 	github.com/spf13/pflag v1.0.7
-	github.com/stretchr/testify v1.10.0
-	github.com/vatesfr/xenorchestra-go-sdk v1.3.0
+	github.com/stretchr/testify v1.11.0
+	github.com/vatesfr/xenorchestra-go-sdk v1.5.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.33.3
 	k8s.io/apimachinery v0.33.3
@@ -92,7 +92,7 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
