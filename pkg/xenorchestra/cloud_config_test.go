@@ -24,18 +24,18 @@ import (
 )
 
 func TestReadCloudConfig(t *testing.T) {
-	cfg, err := readCloudConfig(nil)
+	cfg, err := ReadCloudConfig(nil)
 	assert.NotNil(t, err)
 	assert.NotNil(t, cfg)
 
 	// Empty config
-	cfg, err = readCloudConfig(strings.NewReader(`
+	cfg, err = ReadCloudConfig(strings.NewReader(`
 `))
 	assert.NotNil(t, err)
 	assert.NotNil(t, cfg)
 
 	// Wrong config
-	cfg, err = readCloudConfig(strings.NewReader(`
+	cfg, err = ReadCloudConfig(strings.NewReader(`
 test: false
 `))
 
@@ -43,7 +43,7 @@ test: false
 	assert.NotNil(t, cfg)
 
 	// Non full config
-	cfg, err = readCloudConfig(strings.NewReader(`
+	cfg, err = ReadCloudConfig(strings.NewReader(`
 url: abcd
 token: 123ABC
 `))
@@ -52,7 +52,7 @@ token: 123ABC
 	assert.NotNil(t, cfg)
 
 	// Valid config with one cluster
-	cfg, err = readCloudConfig(strings.NewReader(`
+	cfg, err = ReadCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 token: "123ABC"
@@ -61,7 +61,7 @@ token: "123ABC"
 	assert.NotNil(t, cfg)
 
 	// Valid config with one cluster (username/password)
-	cfg, err = readCloudConfig(strings.NewReader(`
+	cfg, err = ReadCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 username: "user@pam"
@@ -72,12 +72,12 @@ password: "secret"
 }
 
 func TestReadCloudConfigFromFile(t *testing.T) {
-	cfg, err := readCloudConfigFromFile("testdata/cloud-config.yaml")
+	cfg, err := ReadCloudConfigFromFile("testdata/cloud-config.yaml")
 	assert.NotNil(t, err)
 	assert.EqualError(t, err, "error reading testdata/cloud-config.yaml: open testdata/cloud-config.yaml: no such file or directory")
 	assert.NotNil(t, cfg)
 
-	cfg, err = readCloudConfigFromFile("../../hack/xo-config.yaml")
+	cfg, err = ReadCloudConfigFromFile("../../hack/xo-config.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, cfg)
 }
