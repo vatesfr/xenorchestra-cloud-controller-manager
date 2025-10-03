@@ -37,6 +37,34 @@ func (m *MockLibrary) EXPECT() *MockLibraryMockRecorder {
 	return m.recorder
 }
 
+// Pool mocks base method.
+func (m *MockLibrary) Pool() library.Pool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pool")
+	ret0, _ := ret[0].(library.Pool)
+	return ret0
+}
+
+// Pool indicates an expected call of Pool.
+func (mr *MockLibraryMockRecorder) Pool() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pool", reflect.TypeOf((*MockLibrary)(nil).Pool))
+}
+
+// Task mocks base method.
+func (m *MockLibrary) Task() library.Task {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Task")
+	ret0, _ := ret[0].(library.Task)
+	return ret0
+}
+
+// Task indicates an expected call of Task.
+func (mr *MockLibraryMockRecorder) Task() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Task", reflect.TypeOf((*MockLibrary)(nil).Task))
+}
+
 // VM mocks base method.
 func (m *MockLibrary) VM() library.VM {
 	m.ctrl.T.Helper()
