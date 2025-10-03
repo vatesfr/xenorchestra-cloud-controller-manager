@@ -40,10 +40,10 @@ type XOInstances interface {
 }
 
 type instances struct {
-	c *xoClient
+	c *XoClient
 }
 
-func newInstances(client *xoClient) *instances {
+func newInstances(client *XoClient) *instances {
 	return &instances{
 		c: client,
 	}

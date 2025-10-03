@@ -33,14 +33,14 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// xoClient is a Xen Orchestra client.
-type xoClient struct {
-	config *xoConfig
+// XoClient is a Xen Orchestra client.
+type XoClient struct {
+	config *XoConfig
 	Client library.Library
 }
 
 // newXOClient creates a new Xen Orchestra client.
-func newXOClient(cfg *xoConfig) (*xoClient, error) {
+func NewXOClient(cfg *XoConfig) (*XoClient, error) {
 	// Replace the http/https in the URL with ws/wss
 	// to use WebSocket for the connection.
 	// This is required for the Xen Orchestra API to work correctly.
@@ -70,14 +70,14 @@ func newXOClient(cfg *xoConfig) (*xoClient, error) {
 		return nil, err
 	}
 
-	return &xoClient{
+	return &XoClient{
 		config: cfg,
 		Client: client,
 	}, nil
 }
 
 // CheckClient checks if the Xen Orchestra connection is working.
-func (c *xoClient) CheckClient(ctx context.Context) error {
+func (c *XoClient) CheckClient(ctx context.Context) error {
 	vms, err := c.Client.VM().List(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get list of VMs, error: %v", err)
@@ -94,7 +94,7 @@ func (c *xoClient) CheckClient(ctx context.Context) error {
 
 // FindVMByNode find a VM by kubernetes node resource in Xen Orchestra.
 // It returns the VM, the pool ID (region) and an error if any.
-func (c *xoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payloads.VM, poolID uuid.UUID, err error) {
+func (c *XoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payloads.VM, poolID uuid.UUID, err error) {
 	var vmID uuid.UUID
 	if node.Status.NodeInfo.SystemUUID == "" {
 		vmID, err = provider.GetVMID(node.Spec.ProviderID)
@@ -121,7 +121,7 @@ func (c *xoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payload
 }
 
 // FindVMByName find a VM by name in Xen Orchestra (all pools).
-func (c *xoClient) FindVMByName(ctx context.Context, name string) (*payloads.VM, uuid.UUID, error) {
+func (c *XoClient) FindVMByName(ctx context.Context, name string) (*payloads.VM, uuid.UUID, error) {
 	vmClient := c.Client.VM()
 
 	allVms, err := vmClient.List(ctx)

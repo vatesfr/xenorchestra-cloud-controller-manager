@@ -39,7 +39,7 @@ import (
 // 	return &cfg, err
 // }
 
-func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *xoClient {
+func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *XoClient {
 	// Mock VM service
 	mockVM := mock_library.NewMockVM(ctrl)
 	mockVM.EXPECT().List(gomock.Any()).Return([]*payloads.VM{
@@ -59,7 +59,7 @@ func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *xoClient {
 	mockLib.EXPECT().VM().Return(mockVM).AnyTimes()
 
 	// Inject mock into XOClient
-	return &xoClient{
+	return &XoClient{
 		Client: mockLib,
 	}
 }

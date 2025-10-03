@@ -36,7 +36,7 @@ const (
 )
 
 type cloud struct {
-	client      *xoClient
+	client      *XoClient
 	instancesV2 cloudprovider.InstancesV2
 
 	ctx  context.Context //nolint:containedctx
@@ -45,7 +45,7 @@ type cloud struct {
 
 func init() {
 	cloudprovider.RegisterCloudProvider(provider.ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := readCloudConfig(config)
+		cfg, err := ReadCloudConfig(config)
 		if err != nil {
 			klog.ErrorS(err, "failed to read config")
 
@@ -56,8 +56,8 @@ func init() {
 	})
 }
 
-func newCloud(config *xoConfig) (cloudprovider.Interface, error) {
-	client, err := newXOClient(config)
+func newCloud(config *XoConfig) (cloudprovider.Interface, error) {
+	client, err := NewXOClient(config)
 	if err != nil {
 		return nil, err
 	}

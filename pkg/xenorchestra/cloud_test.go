@@ -26,14 +26,14 @@ import (
 )
 
 func TestNewCloudError(t *testing.T) {
-	cloud, err := newCloud(&xoConfig{})
+	cloud, err := newCloud(&XoConfig{})
 	assert.NotNil(t, err)
 	assert.Nil(t, cloud)
 	assert.EqualError(t, err, "url is required")
 }
 
 func TestCloud(t *testing.T) {
-	cfg, err := readCloudConfig(strings.NewReader(`
+	cfg, err := ReadCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 token: "12ABC"

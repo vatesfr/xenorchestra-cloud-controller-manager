@@ -94,7 +94,7 @@ func (ts *ccmTestSuite) SetupTest() {
 	mockLib.EXPECT().VM().Return(mockVM).AnyTimes()
 
 	// Inject mock into XOClient
-	client := &xoClient{
+	client := &XoClient{
 		Client: mockLib,
 	}
 	ts.i = newInstances(client)
