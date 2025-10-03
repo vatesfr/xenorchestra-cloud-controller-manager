@@ -164,8 +164,8 @@ github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1:KO6IkyS8Y3j8OdNO85qEYBsRPuteD+YciPomcXdrMnk=
-github.com/vatesfr/xenorchestra-go-sdk v1.3.0 h1:s6Kd0wHiLPDo6i2pHKZ5EcUd/gueZkZWcHRJgCRMAIw=
-github.com/vatesfr/xenorchestra-go-sdk v1.3.0/go.mod h1:3679gtr7PLytF3C9/QeF/llA0L5ZRvXfaP1oWtk7Hf4=
+github.com/vatesfr/xenorchestra-go-sdk v1.4.0 h1:7mRCjDlgVH7zP4XCFFOZcsA8VJnvihh/lLiUoT9ic9A=
+github.com/vatesfr/xenorchestra-go-sdk v1.4.0/go.mod h1:6XWVtihRMIH1TG7puClTPgGM/POEhstCdbvoljNrgx4=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 h1:S2dVYn90KE98chqDkyE9Z4N61UnQd+KOfgp5Iu53llk=
