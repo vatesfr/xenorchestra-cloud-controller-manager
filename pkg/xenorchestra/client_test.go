@@ -42,7 +42,7 @@ import (
 func newMockedVMClient(_ *testing.T, ctrl *gomock.Controller) *XoClient {
 	// Mock VM service
 	mockVM := mock_library.NewMockVM(ctrl)
-	mockVM.EXPECT().List(gomock.Any()).Return([]*payloads.VM{
+	mockVM.EXPECT().GetAll(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*payloads.VM{
 		{
 			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
 			NameLabel: "test1-vm",
