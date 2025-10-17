@@ -159,6 +159,21 @@ func (mr *MockVMMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockVM)(nil).Delete), arg0, arg1)
 }
 
+// GetAll mocks base method.
+func (m *MockVM) GetAll(arg0 context.Context, arg1 int, arg2 string) ([]*payloads.VM, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]*payloads.VM)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockVMMockRecorder) GetAll(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockVM)(nil).GetAll), arg0, arg1, arg2)
+}
+
 // GetByID mocks base method.
 func (m *MockVM) GetByID(arg0 context.Context, arg1 uuid.UUID) (*payloads.VM, error) {
 	m.ctrl.T.Helper()

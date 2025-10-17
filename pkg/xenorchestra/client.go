@@ -78,7 +78,7 @@ func NewXOClient(cfg *XoConfig) (*XoClient, error) {
 
 // CheckClient checks if the Xen Orchestra connection is working.
 func (c *XoClient) CheckClient(ctx context.Context) error {
-	vms, err := c.Client.VM().List(ctx)
+	vms, err := c.Client.VM().GetAll(ctx, 1, "")
 	if err != nil {
 		return fmt.Errorf("failed to get list of VMs, error: %v", err)
 	}
@@ -124,7 +124,7 @@ func (c *XoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payload
 func (c *XoClient) FindVMByName(ctx context.Context, name string) (*payloads.VM, uuid.UUID, error) {
 	vmClient := c.Client.VM()
 
-	allVms, err := vmClient.List(ctx)
+	allVms, err := vmClient.GetAll(ctx, 0, "name_label:"+name)
 	if err != nil {
 		return nil, uuid.Nil, fmt.Errorf("failed to get list of VMs, error: %v", err)
 	}
