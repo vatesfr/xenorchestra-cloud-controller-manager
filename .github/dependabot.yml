@@ -3,12 +3,15 @@
 # See https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+# Cooldown: Wait 15 days between dependency update PRs to reduce noise
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
       day: "monday"
+    cooldown:
+      default-days: 15
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -26,9 +29,13 @@ updates:
           - "k8s.io/component-base"
           - "k8s.io/component-helpers"
           - "k8s.io/controller-manager"
+    cooldown:
+      default-days: 15
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "monthly"
       day: "monday"
+    cooldown:
+      default-days: 15
