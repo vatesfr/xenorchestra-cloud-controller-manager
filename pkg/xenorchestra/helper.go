@@ -20,8 +20,39 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 )
+
+// convertLittleEndianUUID converts a little-endian UUID to big-endian.
+//
+// Due to a bug in XCP-ng UEFI supports, SMBIOS 2.8 is used instead of SMBIOS 2.4
+// UUIDs are sent in big-endian format instead of little-endian (Microsoft GUID format) as
+// mandated by SMBIOS 2.8. When Linux reads the SMBIOS table, it interprets the UUID
+// as little-endian, causing a mismatch between the UUID reported by the guest OS
+// (via dmidecode/SystemUUID) and the actual VM UUID in Xen Orchestra.
+//
+// This function swaps the first 8 bytes to convert from the
+// incorrectly-interpreted little-endian format to the correct big-endian format.
+//
+// Reference: https://xcp-ng.org/forum/topic/11078/vm-uuid-via-dmidecode-does-not-match-vm-id-in-xen-orchestra/23
+func convertLittleEndianUUID(u uuid.UUID) uuid.UUID {
+	var result uuid.UUID
+	copy(result[:], u[:])
+
+	// Swap bytes for first field (4 bytes)
+	result[0], result[1], result[2], result[3] = u[3], u[2], u[1], u[0]
+
+	// Swap bytes for second field (2 bytes)
+	result[4], result[5] = u[5], u[4]
+
+	// Swap bytes for third field (2 bytes)
+	result[6], result[7] = u[7], u[6]
+
+	// Last 8 bytes remain unchanged
+	return result
+}
 
 // getInstanceType returns the instance type for the given VM.
 // It returns the instance type name if it matches the expected format, otherwise it returns a formatted string
