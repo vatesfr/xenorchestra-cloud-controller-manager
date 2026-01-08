@@ -10,6 +10,7 @@ import (
 
 	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
+	client "github.com/vatesfr/xenorchestra-go-sdk/client"
 	payloads "github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 	library "github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library"
 )
@@ -63,6 +64,20 @@ func (m *MockLibrary) Task() library.Task {
 func (mr *MockLibraryMockRecorder) Task() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Task", reflect.TypeOf((*MockLibrary)(nil).Task))
+}
+
+// V1Client mocks base method.
+func (m *MockLibrary) V1Client() client.XOClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V1Client")
+	ret0, _ := ret[0].(client.XOClient)
+	return ret0
+}
+
+// V1Client indicates an expected call of V1Client.
+func (mr *MockLibraryMockRecorder) V1Client() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V1Client", reflect.TypeOf((*MockLibrary)(nil).V1Client))
 }
 
 // VM mocks base method.

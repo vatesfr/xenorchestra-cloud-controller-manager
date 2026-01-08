@@ -110,9 +110,18 @@ func (c *XoClient) FindVMByNode(ctx context.Context, node *v1.Node) (vm *payload
 
 	vmClient := c.Client.VM()
 
+	// Try to get VM with the original UUID
 	vm, err = vmClient.GetByID(ctx, vmID)
 	if err != nil {
-		return nil, uuid.Nil, err
+		// If failed, try with little-endian to big-endian conversion
+		// Some systems (SMBIOS) report UUIDs with first 3 fields in little-endian
+		convertedID := convertLittleEndianUUID(vmID)
+		klog.V(4).InfoS("Trying with converted UUID", "original", vmID.String(), "converted", convertedID.String())
+		vm, err = vmClient.GetByID(ctx, convertedID)
+		if err != nil {
+			return nil, uuid.Nil, fmt.Errorf("VM not found with UUID %s or %s: %v", vmID.String(), convertedID.String(), err)
+		}
+		klog.V(2).InfoS("Found VM with converted UUID (little-endian fix applied)", "original", vmID.String(), "converted", convertedID.String())
 	}
 
 	klog.V(4).InfoS("Found VM by node", "vm", vm.NameLabel, "uuid", vm.ID.String())
