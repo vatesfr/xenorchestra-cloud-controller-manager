@@ -1,6 +1,38 @@
 
+<a name="v0.2.0"></a>
+## [v0.2.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.1.0...v0.2.0) (2026-01-08)
+
+Welcome to the v0.2.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- workaround for the SystemUUID sometimes in little-endian
+- replace deprecated SDK method after version bump
+- add missing mocks
+
+### Features
+
+- Add unit tests
+- record events when node zone and node region changed
+
+### Changelog
+
+* abb9ff7 fix: workaround for the SystemUUID sometimes in little-endian
+* 05f0a4b fix: replace deprecated SDK method after version bump
+* 0103ee4 build(deps): bump Xen Orchestra SDK version
+* 08ccdc8 refactor: make xoClient and xoConfig available outside package scope
+* e857ac0 fix: add missing mocks
+* 75057ac build(deps): bump github.com/vatesfr/xenorchestra-go-sdk
+* 2089a13 style: fix linting
+* 127b9bb feat: Add unit tests
+* 8269c73 feat: record events when node zone and node region changed
+* d9f95f8 build(deps): bump github.com/spf13/pflag from 1.0.6 to 1.0.7
+* 53430f5 build(deps): bump sigstore/cosign-installer from 3.9.1 to 3.9.2
+* c50202f build(deps): bump golang from 1.24.4-alpine to 1.24.5-alpine
+* 678a332 build(deps): bump the k8s-io group with 5 updates
+
 <a name="v0.1.0"></a>
-## [v0.1.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.4...v0.1.0) (2025-07-04)
+## [v0.1.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.0.4...v0.1.0) (2025-07-29)
 
 Welcome to the v0.1.0 release of Kubernetes cloud controller manager for Xen Orchestra!
 
@@ -15,6 +47,7 @@ Welcome to the v0.1.0 release of Kubernetes cloud controller manager for Xen Orc
 
 ### Changelog
 
+* 306ab27 chore: release v0.1.0
 * dea32aa build: bump chart version
 * 09320f1 feat: add cloud-node-label-sync into chart and deployments
 * 6389856 feat: add cloud-node-label-sync controller to sync labels with actual XO VM state
