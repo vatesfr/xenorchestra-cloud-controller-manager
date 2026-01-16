@@ -5,7 +5,7 @@ kind: ServiceAccount
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.5
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.6
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v0.2.0"
@@ -18,7 +18,7 @@ kind: ClusterRole
 metadata:
   name: system:xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.5
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.6
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v0.2.0"
@@ -106,7 +106,7 @@ kind: Deployment
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.5
+    helm.sh/chart: xenorchestra-cloud-controller-manager-0.0.6
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v0.2.0"
@@ -136,8 +136,7 @@ spec:
         runAsGroup: 10258
         runAsNonRoot: true
         runAsUser: 10258
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
+      dnsPolicy: Default
       initContainers: []
       containers:
         - name: xenorchestra-cloud-controller-manager
