@@ -8,7 +8,7 @@ require (
 	github.com/jarcoal/httpmock v1.4.0
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.11.1
-	github.com/vatesfr/xenorchestra-go-sdk v1.6.0
+	github.com/vatesfr/xenorchestra-go-sdk v1.11.0-beta.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.33.3
 	k8s.io/apimachinery v0.33.3
@@ -18,8 +18,6 @@ require (
 	k8s.io/controller-manager v0.33.3
 	k8s.io/klog/v2 v2.130.1
 )
-
-// replace github.com/vatesfr/xenorchestra-go-sdk => ../../xo-sdk-go
 
 require (
 	cel.dev/expr v0.23.1 // indirect
