@@ -70,7 +70,7 @@ build: ## Build
 
 .PHONY: run
 run: build ## Run
-	./bin/xenorchestra-cloud-controller-manager-$(ARCH) --v=5 --kubeconfig=$(HOME)/.kube/config --cloud-config=xo-config.yaml --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync \
+	./bin/xenorchestra-cloud-controller-manager-$(ARCH) --v=5 --kubeconfig=$(KUBECONFIG) --cloud-config=xo-config.yaml --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync \
 		--use-service-account-credentials --leader-elect=false --bind-address=127.0.0.1 --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
 
 .PHONY: lint
@@ -155,4 +155,4 @@ images-cosign:
 
 .PHONY: mock
 mock:
-	mockgen -destination=pkg/xenorchestra/mocks/mock_library.go -package=mocks github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library Library,VM
+	mockgen -destination=pkg/xenorchestra/mocks/mock_library.go -package=mocks github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library Library,VM,Host,Pool

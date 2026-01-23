@@ -19,7 +19,9 @@ const (
 	XOLabelNamespace              = "k8s.xenorchestra"
 	XOLabelVmNameLabel            = "vm.k8s.xenorchestra/name_label"
 	XOLabelTopologyPoolID         = "topology.k8s.xenorchestra/pool_id"
+	XOLabelTopologyPoolNameLabel  = "topology.k8s.xenorchestra/pool_name_label"
 	XOLabelTopologyHostID         = "topology.k8s.xenorchestra/host_id"
+	XOLabelTopologyHostNameLabel  = "topology.k8s.xenorchestra/host_name_label"
 	XOLabelTopologyOriginalHostID = "topology.k8s.xenorchestra/original_host_id"
 	XOLabelTopologyOriginalPoolID = "topology.k8s.xenorchestra/original_pool_id"
 )

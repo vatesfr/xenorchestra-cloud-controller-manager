@@ -53,13 +53,13 @@ func (ts *ccmTestSuite) SetupTest() {
 			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
 			NameLabel: "test1-vm",
 			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container: "8af7110d-bfad-407a-a663-9527d10a6583",
+			Container: uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
 		},
 		{
 			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
 			NameLabel: "test2-vm",
 			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container: "8af7110d-bfad-407a-a663-9527d10a6583",
+			Container: uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
 		},
 	}, nil).AnyTimes()
 
@@ -68,7 +68,7 @@ func (ts *ccmTestSuite) SetupTest() {
 			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
 			NameLabel:  "pool-1-node-1",
 			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container:  "8af7110d-bfad-407a-a663-9527d10a6583",
+			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
 			CPUs:       payloads.CPUs{Max: 4},
 			Memory:     payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
 			PowerState: "Running",
@@ -79,20 +79,86 @@ func (ts *ccmTestSuite) SetupTest() {
 			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
 			NameLabel:  "pool-2-node-1",
 			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			Container:  "8af7110d-bfad-407a-a663-9527d10a6586",
+			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
 			CPUs:       payloads.CPUs{Max: 2},
 			Memory:     payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
 			PowerState: "Halted",
+		}, nil).AnyTimes()
+
+	// Mock VM for testing host retrieval error
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003"))).Return(
+		&payloads.VM{
+			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003")),
+			NameLabel:  "pool-1-node-3",
+			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
+			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584"),
+			CPUs:       payloads.CPUs{Max: 8},
+			Memory:     payloads.Memory{Size: 16 * 1024 * 1024 * 1024},
+			PowerState: "Running",
+		}, nil).AnyTimes()
+
+	// Mock VM for testing pool retrieval error
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004"))).Return(
+		&payloads.VM{
+			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004")),
+			NameLabel:  "pool-z-node-4",
+			PoolID:     uuid.Must(uuid.FromString("ffffffff-ffff-4fff-afff-ffffffffffff")),
+			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			CPUs:       payloads.CPUs{Max: 2},
+			Memory:     payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			PowerState: "Running",
 		}, nil).AnyTimes()
 
 	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf(`API error: 404 Not Found - {
 	"error": "no such VM 48b8425b-469a-4b4b-860e-635568e5445a"
 }`)).AnyTimes()
 
+	// Mock Host service
+	mockHost := mock_library.NewMockHost(ts.ctrl)
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583")).Return(
+		&payloads.Host{
+			ID:        uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
+			NameLabel: "test-host-1",
+		}, nil).AnyTimes()
+
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586")).Return(
+		&payloads.Host{
+			ID:        uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			NameLabel: "test-host-2",
+		}, nil).AnyTimes()
+
+	// Mock Host.Get for a specific UUID that will return an error
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584")).Return(
+		nil, fmt.Errorf("API error: 404 Not Found - host not found")).AnyTimes()
+
+	// // Default mock for any other Host.Get call
+	// mockHost.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+	// 	&payloads.Host{
+	// 		ID:        uuid.UUID{},
+	// 		NameLabel: "default-host",
+	// 	}, nil).AnyTimes()
+
+	mockPool := mock_library.NewMockPool(ts.ctrl)
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")).Return(
+		&payloads.Pool{
+			ID:        uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d"),
+			NameLabel: "test-pool-1",
+		}, nil).AnyTimes()
+
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")).Return(
+		&payloads.Pool{
+			ID:        uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d"),
+			NameLabel: "test-pool-2",
+		}, nil).AnyTimes()
+
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("ffffffff-ffff-4fff-afff-ffffffffffff")).Return(
+		nil, fmt.Errorf("API error: 404 Not Found - pool not found")).AnyTimes()
+
 	// Mock Library
 	mockLib := mock_library.NewMockLibrary(ts.ctrl)
 	mockLib.EXPECT().VM().Return(mockVM).AnyTimes()
-
+	mockLib.EXPECT().Host().Return(mockHost).AnyTimes()
+	mockLib.EXPECT().Pool().Return(mockPool).AnyTimes()
 	// Inject mock into XOClient
 	client := &XoClient{
 		Client: mockLib,
@@ -391,9 +457,11 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
 				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id": "8af7110d-bfad-407a-a663-9527d10a6583",
-					"topology.k8s.xenorchestra/pool_id": "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-					"vm.k8s.xenorchestra/name_label":    "pool-1-node-1",
+					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6583",
+					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
+					"vm.k8s.xenorchestra/name_label":            "pool-1-node-1",
+					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
+					"topology.k8s.xenorchestra/host_name_label": "test-host-1",
 				},
 			},
 		},
@@ -432,9 +500,95 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
 				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id": "8af7110d-bfad-407a-a663-9527d10a6583",
-					"topology.k8s.xenorchestra/pool_id": "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-					"vm.k8s.xenorchestra/name_label":    "pool-1-node-1",
+					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6583",
+					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
+					"vm.k8s.xenorchestra/name_label":            "pool-1-node-1",
+					"topology.k8s.xenorchestra/host_name_label": "test-host-1",
+					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
+				},
+			},
+		},
+		{
+			msg: "NodeExistsHostRetrievalError",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pool-1-node-3",
+					Annotations: map[string]string{
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.5",
+					},
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440003",
+				},
+				Status: v1.NodeStatus{
+					NodeInfo: v1.NodeSystemInfo{
+						SystemUUID: "550e8400-e29b-41d4-a716-446655440003",
+					},
+				},
+			},
+			expected: &cloudprovider.InstanceMetadata{
+				ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440003",
+				NodeAddresses: []v1.NodeAddress{
+					{
+						Type:    v1.NodeInternalIP,
+						Address: "1.2.3.5",
+					},
+					{
+						Type:    v1.NodeHostName,
+						Address: "pool-1-node-3",
+					},
+				},
+				InstanceType: "8vCPU-16GB",
+				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
+				Zone:         "8af7110d-bfad-407a-a663-9527d10a6584",
+				AdditionalLabels: map[string]string{
+					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6584",
+					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
+					"vm.k8s.xenorchestra/name_label":            "pool-1-node-3",
+					"topology.k8s.xenorchestra/host_name_label": "unknown",
+					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
+				},
+			},
+		},
+		{
+			msg: "NodeExistsPoolRetrievalError",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pool-unknown-node-1",
+					Annotations: map[string]string{
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.6",
+					},
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: "xenorchestra://ffffffff-ffff-4fff-afff-ffffffffffff/550e8400-e29b-41d4-a716-446655440004",
+				},
+				Status: v1.NodeStatus{
+					NodeInfo: v1.NodeSystemInfo{
+						SystemUUID: "550e8400-e29b-41d4-a716-446655440004",
+					},
+				},
+			},
+			expected: &cloudprovider.InstanceMetadata{
+				ProviderID: "xenorchestra://ffffffff-ffff-4fff-afff-ffffffffffff/550e8400-e29b-41d4-a716-446655440004",
+				NodeAddresses: []v1.NodeAddress{
+					{
+						Type:    v1.NodeInternalIP,
+						Address: "1.2.3.6",
+					},
+					{
+						Type:    v1.NodeHostName,
+						Address: "pool-unknown-node-1",
+					},
+				},
+				InstanceType: "2vCPU-4GB",
+				Region:       "ffffffff-ffff-4fff-afff-ffffffffffff",
+				Zone:         "8af7110d-bfad-407a-a663-9527d10a6586",
+				AdditionalLabels: map[string]string{
+					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6586",
+					"topology.k8s.xenorchestra/pool_id":         "ffffffff-ffff-4fff-afff-ffffffffffff",
+					"vm.k8s.xenorchestra/name_label":            "pool-z-node-4",
+					"topology.k8s.xenorchestra/host_name_label": "test-host-2",
+					"topology.k8s.xenorchestra/pool_name_label": "unknown",
 				},
 			},
 		},
