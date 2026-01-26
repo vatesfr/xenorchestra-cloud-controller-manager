@@ -159,6 +159,11 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 		}
 	}
 
+	// Add external IP from the VM's main IP address
+	if vmRef.MainIpAddress != "" {
+		addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: vmRef.MainIpAddress})
+	}
+
 	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeHostName, Address: node.Name})
 
 	instanceType := getInstanceType(vmRef)

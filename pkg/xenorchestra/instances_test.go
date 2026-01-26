@@ -65,48 +65,52 @@ func (ts *ccmTestSuite) SetupTest() {
 
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001"))).Return(
 		&payloads.VM{
-			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
-			NameLabel:  "pool-1-node-1",
-			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
-			CPUs:       payloads.CPUs{Max: 4},
-			Memory:     payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
-			PowerState: "Running",
+			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
+			NameLabel:     "pool-1-node-1",
+			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
+			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
+			CPUs:          payloads.CPUs{Max: 4},
+			Memory:        payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
+			PowerState:    "Running",
+			MainIpAddress: "10.0.0.1",
 		}, nil).AnyTimes()
 
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002"))).Return(
 		&payloads.VM{
-			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
-			NameLabel:  "pool-2-node-1",
-			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
-			CPUs:       payloads.CPUs{Max: 2},
-			Memory:     payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
-			PowerState: "Halted",
+			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
+			NameLabel:     "pool-2-node-1",
+			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
+			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			CPUs:          payloads.CPUs{Max: 2},
+			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			PowerState:    "Halted",
+			MainIpAddress: "10.0.0.2",
 		}, nil).AnyTimes()
 
 	// Mock VM for testing host retrieval error
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003"))).Return(
 		&payloads.VM{
-			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003")),
-			NameLabel:  "pool-1-node-3",
-			PoolID:     uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584"),
-			CPUs:       payloads.CPUs{Max: 8},
-			Memory:     payloads.Memory{Size: 16 * 1024 * 1024 * 1024},
-			PowerState: "Running",
+			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003")),
+			NameLabel:     "pool-1-node-3",
+			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
+			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584"),
+			CPUs:          payloads.CPUs{Max: 8},
+			Memory:        payloads.Memory{Size: 16 * 1024 * 1024 * 1024},
+			PowerState:    "Running",
+			MainIpAddress: "10.0.0.3",
 		}, nil).AnyTimes()
 
 	// Mock VM for testing pool retrieval error
 	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004"))).Return(
 		&payloads.VM{
-			ID:         uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004")),
-			NameLabel:  "pool-z-node-4",
-			PoolID:     uuid.Must(uuid.FromString("ffffffff-ffff-4fff-afff-ffffffffffff")),
-			Container:  uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
-			CPUs:       payloads.CPUs{Max: 2},
-			Memory:     payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
-			PowerState: "Running",
+			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004")),
+			NameLabel:     "pool-z-node-4",
+			PoolID:        uuid.Must(uuid.FromString("ffffffff-ffff-4fff-afff-ffffffffffff")),
+			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			CPUs:          payloads.CPUs{Max: 2},
+			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			PowerState:    "Running",
+			MainIpAddress: "10.0.0.4",
 		}, nil).AnyTimes()
 
 	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf(`API error: 404 Not Found - {
@@ -449,6 +453,10 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 						Address: "1.2.3.4",
 					},
 					{
+						Type:    v1.NodeExternalIP,
+						Address: "10.0.0.1",
+					},
+					{
 						Type:    v1.NodeHostName,
 						Address: "pool-1-node-1",
 					},
@@ -490,6 +498,10 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 					{
 						Type:    v1.NodeInternalIP,
 						Address: "2001::1",
+					},
+					{
+						Type:    v1.NodeExternalIP,
+						Address: "10.0.0.1",
 					},
 					{
 						Type:    v1.NodeHostName,
@@ -534,6 +546,10 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 						Address: "1.2.3.5",
 					},
 					{
+						Type:    v1.NodeExternalIP,
+						Address: "10.0.0.3",
+					},
+					{
 						Type:    v1.NodeHostName,
 						Address: "pool-1-node-3",
 					},
@@ -574,6 +590,10 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 					{
 						Type:    v1.NodeInternalIP,
 						Address: "1.2.3.6",
+					},
+					{
+						Type:    v1.NodeExternalIP,
+						Address: "10.0.0.4",
 					},
 					{
 						Type:    v1.NodeHostName,
