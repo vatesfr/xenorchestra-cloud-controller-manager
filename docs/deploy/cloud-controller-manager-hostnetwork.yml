@@ -137,6 +137,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 10258
       dnsPolicy: Default
+      hostNetwork: true
       initContainers: []
       containers:
         - name: xenorchestra-cloud-controller-manager
