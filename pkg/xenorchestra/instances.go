@@ -159,21 +159,48 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 		}
 	}
 
+	// Add external IP from the VM's main IP address
+	if vmRef.MainIpAddress != "" {
+		addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: vmRef.MainIpAddress})
+	}
+
 	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeHostName, Address: node.Name})
 
 	instanceType := getInstanceType(vmRef)
 
+	// Get Host info
+	hostRef, err := i.c.Client.Host().Get(ctx, vmRef.Container)
+	if err != nil {
+		klog.ErrorS(err, "instances.InstanceMetadata() failed to get host info", "hostID", vmRef.Container.String())
+		hostRef = &payloads.Host{
+			ID:        vmRef.Container,
+			NameLabel: "unknown",
+		}
+	}
+
+	// Get Pool info
+	poolRef, err := i.c.Client.Pool().Get(ctx, vmRef.PoolID)
+	if err != nil {
+		klog.ErrorS(err, "instances.InstanceMetadata() failed to get pool info", "poolID", vmRef.PoolID.String())
+		poolRef = &payloads.Pool{
+			ID:        vmRef.PoolID,
+			NameLabel: "unknown",
+		}
+	}
+
 	return &cloudprovider.InstanceMetadata{
 		AdditionalLabels: map[string]string{
-			XOLabelVmNameLabel:    sanitizeToLabel(vmRef.NameLabel),
-			XOLabelTopologyPoolID: sanitizeToLabel(vmRef.PoolID.String()),
-			XOLabelTopologyHostID: sanitizeToLabel(vmRef.Container),
+			XOLabelVmNameLabel:           sanitizeToLabel(vmRef.NameLabel),
+			XOLabelTopologyPoolID:        sanitizeToLabel(vmRef.PoolID.String()),
+			XOLabelTopologyHostID:        sanitizeToLabel(vmRef.Container.String()),
+			XOLabelTopologyHostNameLabel: sanitizeToLabel(hostRef.NameLabel),
+			XOLabelTopologyPoolNameLabel: sanitizeToLabel(poolRef.NameLabel),
 			// TODO: Add pool nameLabel and host nameLabel: requires XO SDK additional features
 		},
 		ProviderID:    providerID,
 		NodeAddresses: addresses,
 		InstanceType:  instanceType,
-		Zone:          vmRef.Container, // TODO: Use uuid for host ID
+		Zone:          vmRef.Container.String(),
 		Region:        vmRef.PoolID.String(),
 	}, nil
 }
