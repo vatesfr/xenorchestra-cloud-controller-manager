@@ -38,3 +38,9 @@ rules:
   - nodes/status
   verbs:
   - patch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
