@@ -1,4 +1,58 @@
 
+<a name="chart/1.0.0-rc.1"></a>
+## [chart/1.0.0-rc.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.1...chart/1.0.0-rc.1) (2026-01-29)
+
+Welcome to the chart/1.0.0-rc.1 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Changelog
+
+
+<a name="v1.0.0-rc.1"></a>
+## [v1.0.0-rc.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/chart/0.0.6...v1.0.0-rc.1) (2026-01-29)
+
+Welcome to the v1.0.0-rc.1 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- remove service-lb and node-route controllers from initialization
+- remove unused RBAC rules
+
+### Features
+
+- **deps:** use beta version of the XO SDK
+- **metadata:** add external IP address to instance metadata and update tests
+- **metadata:** Add the host name and the pool name to the node labels
+
+### Changelog
+
+* 04ce888 build: bump chart version
+* af480f8 fix: remove service-lb and node-route controllers from initialization
+* 1f10890 fix: remove unused RBAC rules
+* b063784 docs: update readme & install documentation
+* cb4ab4f build(deps): bump actions/checkout from 4 to 6
+* a446620 build(deps): bump golangci/golangci-lint-action from 8 to 9
+* 8038c6d build(deps): bump the k8s-io group with 6 updates
+* 57f1f92 build(deps): bump helm/chart-testing-action from 2.7.0 to 2.8.0
+* 86b36ca build(deps): bump golang from 1.24.5-alpine to 1.25.3-alpine
+* 93f3a53 build(deps): bump sigstore/cosign-installer from 3.9.2 to 4.0.0
+* b1e4c2c build(deps): bump github.com/spf13/pflag from 1.0.7 to 1.0.10
+* 7784a2c build(deps): bump actions/setup-go from 5 to 6
+* 7d256fe build(deps): bump github.com/jarcoal/httpmock from 1.4.0 to 1.4.1
+* d2d2b37 feat(metadata): add external IP address to instance metadata and update tests
+* 02d384c feat(deps): use beta version of the XO SDK
+* 5a80e5a feat(metadata): Add the host name and the pool name to the node labels
+
+<a name="chart/0.0.6"></a>
+## [chart/0.0.6](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.2.0...chart/0.0.6) (2026-01-16)
+
+Welcome to the chart/0.0.6 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Changelog
+
+* dd4708b build: bump chart version
+* 38cc9c0 build: bump chart version needs bump to fix a default value
+* 2c8c3e5 chore: release v0.2 .0
+
 <a name="v0.2.0"></a>
 ## [v0.2.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v0.1.0...v0.2.0) (2026-01-08)
 

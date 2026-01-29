@@ -1,6 +1,6 @@
 # xenorchestra-cloud-controller-manager
 
-![Version: 0.0.6](https://img.shields.io/badge/Version-0.0.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.2.0](https://img.shields.io/badge/AppVersion-v0.2.0-informational?style=flat-square)
+![Version: 1.0.0-rc.1](https://img.shields.io/badge/Version-1.0.0--rc.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.0-rc.1](https://img.shields.io/badge/AppVersion-v1.0.0--rc.1-informational?style=flat-square)
 
 Cloud Controller Manager plugin for Xen Orchestra
 
