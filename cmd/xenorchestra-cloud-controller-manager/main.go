@@ -63,8 +63,8 @@ func main() {
 	controllerAliases[nodelabelsync.ControllerAlias] = nodelabelsync.ControllerName
 	// Here is an example to remove the controller which is not needed.
 	// e.g. remove the cloud-node-lifecycle controller which current cloud provider does not need.
-	delete(controllerInitializers, "service-lb")
-	delete(controllerInitializers, "node-route")
+	delete(controllerInitializers, "service-lb-controller")
+	delete(controllerInitializers, "node-route-controller")
 
 	fss := cliflag.NamedFlagSets{}
 	command := app.NewCloudControllerManagerCommand(ccmOptions, cloudInitializer, controllerInitializers, controllerAliases, fss, wait.NeverStop)
