@@ -5,7 +5,7 @@ kind: ServiceAccount
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.1
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.2
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v1.0.0-rc.1"
@@ -18,7 +18,7 @@ kind: ClusterRole
 metadata:
   name: system:xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.1
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.2
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v1.0.0-rc.1"
@@ -105,7 +105,7 @@ kind: Deployment
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.1
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.0.0-rc.2
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
     app.kubernetes.io/version: "v1.0.0-rc.1"
