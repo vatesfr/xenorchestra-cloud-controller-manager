@@ -1,6 +1,6 @@
 # xenorchestra-cloud-controller-manager
 
-![Version: 1.0.0-rc.1](https://img.shields.io/badge/Version-1.0.0--rc.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.0-rc.1](https://img.shields.io/badge/AppVersion-v1.0.0--rc.1-informational?style=flat-square)
+![Version: 1.0.0-rc.1](https://img.shields.io/badge/Version-1.0.0--rc.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.0-rc.1-1-g8498718-dirty](https://img.shields.io/badge/AppVersion-v1.0.0--rc.1--1--g8498718--dirty-informational?style=flat-square)
 
 Cloud Controller Manager plugin for Xen Orchestra
 
@@ -69,6 +69,16 @@ tolerations:
     effect: NoSchedule
 ```
 
+Using a daemonset:
+```yaml
+
+useDaemonSet: true
+
+# Set nodeSelector in daemonset mode is required
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+```
+
 Deploy chart:
 
 ```shell
@@ -102,10 +112,11 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | podSecurityContext | object | `{"fsGroup":10258,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":10258,"runAsNonRoot":true,"runAsUser":10258}` | Pods Security Context. ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container Security Context. ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod |
 | resources | object | `{"requests":{"cpu":"10m","memory":"32Mi"}}` | Resource requests and limits. ref: https://kubernetes.io/docs/user-guide/compute-resources/ |
+| useDaemonSet | bool | `false` | Deploy CCM  in Daemonset mode. |
 | updateStrategy | object | `{"rollingUpdate":{"maxUnavailable":1},"type":"RollingUpdate"}` | Deployment update strategy type. ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment |
 | nodeSelector | object | `{}` | Node labels for data pods assignment.  ref: https://kubernetes.io/docs/user-guide/node-selection/ |
 | tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Exists"},{"effect":"NoSchedule","key":"node.cloudprovider.kubernetes.io/uninitialized","operator":"Exists"}]` | Tolerations for data pods assignment. ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | affinity | object | `{}` | Affinity for data pods assignment. ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity |
 | extraVolumes | list | `[]` | Additional volumes for Pods |
 | extraVolumeMounts | list | `[]` | Additional volume mounts for Pods |
-| useHostNetwork | bool | `false` | Host networking requested for the CCM Pod |
+| useHostNetwork | bool | `false` | Host networking requested for the CCM Pod. CCM will use hostNetwork. It allows to use CCM without CNI plugins. |

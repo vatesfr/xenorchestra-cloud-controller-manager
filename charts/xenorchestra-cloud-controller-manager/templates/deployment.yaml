@@ -1,14 +1,23 @@
 apiVersion: apps/v1
+{{- if .Values.useDaemonSet }}
+kind: DaemonSet
+{{- else }}
 kind: Deployment
+{{- end }}
 metadata:
   name: {{ include "xenorchestra-cloud-controller-manager.fullname" . }}
   labels:
     {{- include "xenorchestra-cloud-controller-manager.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
 spec:
+  {{- if not .Values.useDaemonSet }}
   replicas: {{ .Values.replicaCount }}
   strategy:
     type: {{ .Values.updateStrategy.type }}
+  {{- else }}
+  updateStrategy:
+    type: {{ .Values.updateStrategy.type }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "xenorchestra-cloud-controller-manager.selectorLabels" . | nindent 6 }}
@@ -59,6 +68,9 @@ spec:
             - --use-service-account-credentials
             - --secure-port=10258
             - --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
+            {{- if and (eq (int .Values.replicaCount) 1) (not .Values.useDaemonSet) }}
+            - --leader-elect=false
+            {{- end }}
           {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -108,6 +120,12 @@ spec:
       {{- with .Values.tolerations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.useDaemonSet }}
+        - effect: NoSchedule
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+      {{- end }}
+      {{- if not .Values.useDaemonSet }}
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -115,6 +133,7 @@ spec:
           labelSelector:
             matchLabels:
               {{- include "xenorchestra-cloud-controller-manager.selectorLabels" . | nindent 14 }}
+      {{- end }}
       volumes:
         {{- if .Values.existingConfigSecret }}
         - name: cloud-config

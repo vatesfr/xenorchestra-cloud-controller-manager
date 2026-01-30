@@ -158,6 +158,7 @@ spec:
             - --use-service-account-credentials
             - --secure-port=10258
             - --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
+            - --leader-elect=false
           ports:
             - name: metrics
               containerPort: 10258

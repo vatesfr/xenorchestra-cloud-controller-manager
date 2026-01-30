@@ -118,6 +118,10 @@ docs:
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		--set-string image.tag=$(TAG) \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager.yml
+	helm template -n kube-system xenorchestra-cloud-controller-manager \
+		--set-string image.tag=$(TAG) \
+		--set useDaemonSet=true \
+		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-daemonset.yml
 	helm-docs --sort-values-order=file charts/xenorchestra-cloud-controller-manager
 
 release-update:

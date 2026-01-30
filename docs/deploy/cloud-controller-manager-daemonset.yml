@@ -101,7 +101,7 @@ subjects:
 ---
 # Source: xenorchestra-cloud-controller-manager/templates/deployment.yaml
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
@@ -112,8 +112,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
   namespace: kube-system
 spec:
-  replicas: 1
-  strategy:
+  updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
@@ -157,7 +156,6 @@ spec:
             - --use-service-account-credentials
             - --secure-port=10258
             - --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
-            - --leader-elect=false
           ports:
             - name: metrics
               containerPort: 10258
@@ -195,14 +193,9 @@ spec:
         - effect: NoSchedule
           key: node.cloudprovider.kubernetes.io/uninitialized
           operator: Exists
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: xenorchestra-cloud-controller-manager
-              app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+        - effect: NoSchedule
+          key: node.kubernetes.io/not-ready
+          operator: Exists
       volumes:
         - name: cloud-config
           secret:

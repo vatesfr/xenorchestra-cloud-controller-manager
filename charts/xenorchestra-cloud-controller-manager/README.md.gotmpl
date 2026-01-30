@@ -74,6 +74,16 @@ tolerations:
     effect: NoSchedule
 ```
 
+Using a daemonset:
+```yaml
+
+useDaemonSet: true
+
+# Set nodeSelector in daemonset mode is required
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+```
+
 Deploy chart:
 
 ```shell
