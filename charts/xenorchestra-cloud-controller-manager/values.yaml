@@ -111,6 +111,9 @@ resources:
     cpu: 10m
     memory: 32Mi
 
+# -- Deploy CCM  in Daemonset mode.
+useDaemonSet: false
+
 # -- Deployment update strategy type.
 # ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment
 updateStrategy:
@@ -149,5 +152,7 @@ extraVolumes: []
 # -- Additional volume mounts for Pods
 extraVolumeMounts: []
 
-# --  Host networking requested for the CCM Pod
+# --  Host networking requested for the CCM Pod.
+# CCM will use hostNetwork.
+# It allows to use CCM without CNI plugins.
 useHostNetwork: false
