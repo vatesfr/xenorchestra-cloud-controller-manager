@@ -1,11 +1,17 @@
 
-<a name="chart/1.0.0-rc.1"></a>
-## [chart/1.0.0-rc.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.1...chart/1.0.0-rc.1) (2026-01-29)
+<a name="v1.0.0-rc.2"></a>
+## [v1.0.0-rc.2](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-03)
 
-Welcome to the chart/1.0.0-rc.1 release of Kubernetes cloud controller manager for Xen Orchestra!
+Welcome to the v1.0.0-rc.2 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- remove leader election when 1 replica and add useDaemonSet for the CCM
 
 ### Changelog
 
+* 0568353 build: bump chart version
+* 0df6bfd fix: remove leader election when 1 replica and add useDaemonSet for the CCM
 
 <a name="v1.0.0-rc.1"></a>
 ## [v1.0.0-rc.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/chart/0.0.6...v1.0.0-rc.1) (2026-01-29)
@@ -25,6 +31,7 @@ Welcome to the v1.0.0-rc.1 release of Kubernetes cloud controller manager for Xe
 
 ### Changelog
 
+* 95cf40e chore: release v1.0.0-rc.1
 * 04ce888 build: bump chart version
 * af480f8 fix: remove service-lb and node-route controllers from initialization
 * 1f10890 fix: remove unused RBAC rules
