@@ -44,6 +44,7 @@ rules:
   - serviceaccounts
   verbs:
   - get
+  - create
 - apiGroups:
   - ""
   resources:
