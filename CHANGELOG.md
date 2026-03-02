@@ -1,4 +1,19 @@
 
+<a name="v1.0.0-rc.3"></a>
+## [v1.0.0-rc.3](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-03-02)
+
+Welcome to the v1.0.0-rc.3 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- chart, role
+
+### Changelog
+
+* ea61203 chore: release v1.0.0-rc.3
+* 8422df5 fix: chart, role
+* 889ef73 chore: release v1.0.0-rc.2
+
 <a name="v1.0.0-rc.2"></a>
 ## [v1.0.0-rc.2](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-03)
 
