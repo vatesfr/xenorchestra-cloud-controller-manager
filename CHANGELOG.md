@@ -1,4 +1,13 @@
 
+<a name="v1.0.0"></a>
+## [v1.0.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.3...v1.0.0) (2026-03-05)
+
+Welcome to the v1.0.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Changelog
+
+* 4b79ab8 build: bump chart version
+
 <a name="v1.0.0-rc.3"></a>
 ## [v1.0.0-rc.3](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-03-02)
 
