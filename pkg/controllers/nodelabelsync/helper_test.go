@@ -21,11 +21,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudprovider "k8s.io/cloud-provider"
-
-	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 // Create instance metadata with additional labels

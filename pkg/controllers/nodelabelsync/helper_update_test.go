@@ -24,6 +24,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,8 +33,6 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
-
-	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 var testNode = &v1.Node{

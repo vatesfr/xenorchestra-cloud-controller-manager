@@ -21,10 +21,10 @@ import (
 	"context"
 	"io"
 
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
+
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
-
-	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 const (
@@ -76,6 +76,7 @@ func newCloud(config *xok8s.XoConfig) (cloudprovider.Interface, error) {
 func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
 	klog.InfoS("clientset initialized")
 
+	// #nosec G118 -- The cancel function is stored in the cloud struct and called when the provider receives a stop signal
 	ctx, cancel := context.WithCancel(context.Background())
 	c.ctx = ctx
 	c.stop = cancel
