@@ -23,8 +23,8 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	cloudprovider "k8s.io/cloud-provider"
@@ -40,10 +40,10 @@ type XOInstances interface {
 }
 
 type instances struct {
-	c *XoClient
+	c *xok8s.XoClient
 }
 
-func newInstances(client *XoClient) *instances {
+func newInstances(client *xok8s.XoClient) *instances {
 	return &instances{
 		c: client,
 	}
@@ -60,7 +60,7 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 		return true, nil
 	}
 
-	if !strings.HasPrefix(node.Spec.ProviderID, provider.ProviderName) {
+	if !strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName) {
 		klog.V(4).InfoS("instances.InstanceExists() omitting unmanaged node", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
 		return true, nil
@@ -90,7 +90,7 @@ func (i *instances) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, 
 		return false, nil
 	}
 
-	if !strings.HasPrefix(node.Spec.ProviderID, provider.ProviderName) {
+	if !strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName) {
 		klog.V(4).InfoS("instances.InstanceShutdown() omitting unmanaged node", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
 		return false, nil
@@ -137,8 +137,8 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 			return nil, fmt.Errorf("instances.InstanceMetadata() - failed to find instance by uuid %s: %v, skipped", node.Name, err)
 		}
 
-		providerID = provider.GetProviderID(region, vmRef)
-	} else if !strings.HasPrefix(node.Spec.ProviderID, provider.ProviderName) {
+		providerID = xok8s.GetProviderID(region, vmRef)
+	} else if !strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName) {
 		klog.V(4).InfoS("instances.InstanceMetadata() omitting unmanaged node", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
 		return &cloudprovider.InstanceMetadata{}, nil
@@ -190,12 +190,11 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 
 	return &cloudprovider.InstanceMetadata{
 		AdditionalLabels: map[string]string{
-			XOLabelVmNameLabel:           sanitizeToLabel(vmRef.NameLabel),
-			XOLabelTopologyPoolID:        sanitizeToLabel(vmRef.PoolID.String()),
-			XOLabelTopologyHostID:        sanitizeToLabel(vmRef.Container.String()),
-			XOLabelTopologyHostNameLabel: sanitizeToLabel(hostRef.NameLabel),
-			XOLabelTopologyPoolNameLabel: sanitizeToLabel(poolRef.NameLabel),
-			// TODO: Add pool nameLabel and host nameLabel: requires XO SDK additional features
+			xok8s.XOLabelVmNameLabel:           sanitizeToLabel(vmRef.NameLabel),
+			xok8s.XOLabelTopologyPoolID:        sanitizeToLabel(vmRef.PoolID.String()),
+			xok8s.XOLabelTopologyHostID:        sanitizeToLabel(vmRef.Container.String()),
+			xok8s.XOLabelTopologyHostNameLabel: sanitizeToLabel(hostRef.NameLabel),
+			xok8s.XOLabelTopologyPoolNameLabel: sanitizeToLabel(poolRef.NameLabel),
 		},
 		ProviderID:    providerID,
 		NodeAddresses: addresses,
@@ -209,7 +208,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 func (i *instances) GetInstance(ctx context.Context, node *v1.Node) (*payloads.VM, error) {
 	klog.V(4).InfoS("instances.getInstance() called", "node", klog.KRef("", node.Name))
 
-	nodeRef, poolID, err := provider.ParseProviderID(node.Spec.ProviderID)
+	nodeRef, poolID, err := xok8s.ParseProviderID(node.Spec.ProviderID)
 	if err != nil {
 		klog.Errorf("Cannot parse Node UUID %s (%s)", nodeRef.ID, node.Name)
 

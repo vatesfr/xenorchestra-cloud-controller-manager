@@ -24,8 +24,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,16 +31,18 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
+
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 var testNode = &v1.Node{
 	ObjectMeta: metav1.ObjectMeta{
 		Name: "node-nochange",
 		Labels: map[string]string{
-			v1.LabelTopologyZone:                          "host-1",
-			v1.LabelTopologyRegion:                        "pool-1",
-			v1.LabelInstanceTypeStable:                    "2vCPU-2GB",
-			xenorchestra.XOLabelNamespace + "/test-label": "test-value",
+			v1.LabelTopologyZone:                   "host-1",
+			v1.LabelTopologyRegion:                 "pool-1",
+			v1.LabelInstanceTypeStable:             "2vCPU-2GB",
+			xok8s.XOLabelNamespace + "/test-label": "test-value",
 		},
 	},
 	Spec: v1.NodeSpec{Taints: []v1.Taint{}},
@@ -79,7 +79,7 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 		Region:       "pool-1",
 		InstanceType: "2vCPU-2GB",
 		AdditionalLabels: map[string]string{
-			xenorchestra.XOLabelNamespace + "/test-label": "test-value",
+			xok8s.XOLabelNamespace + "/test-label": "test-value",
 		},
 	}
 
@@ -94,7 +94,7 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 	assert.Equal(t, "host-1", got.Labels[v1.LabelTopologyZone])
 	assert.Equal(t, "pool-1", got.Labels[v1.LabelTopologyRegion])
 	assert.Equal(t, "2vCPU-2GB", got.Labels[v1.LabelInstanceTypeStable])
-	assert.Equal(t, "test-value", got.Labels[xenorchestra.XOLabelNamespace+"/test-label"])
+	assert.Equal(t, "test-value", got.Labels[xok8s.XOLabelNamespace+"/test-label"])
 
 	// No events should be emitted
 	evs := drainEvents(recorder, 1, 150*time.Millisecond)
@@ -122,7 +122,7 @@ func TestUpdateNodeLabels_ZoneChanged(t *testing.T) {
 	}
 	assert.Equal(t, "host-2", got.Labels[v1.LabelTopologyZone])
 	assert.Equal(t, "host-2", got.Labels[v1.LabelFailureDomainBetaZone])
-	assert.Equal(t, "host-1", got.Labels[xenorchestra.XOLabelTopologyOriginalHostID])
+	assert.Equal(t, "host-1", got.Labels[xok8s.XOLabelTopologyOriginalHostID])
 
 	evs := drainEvents(recorder, 1, 500*time.Millisecond)
 	if assert.Equal(t, len(evs), 1, "expected at least one event") {
@@ -155,7 +155,7 @@ func TestUpdateNodeLabels_RegionChanged(t *testing.T) {
 	}
 	assert.Equal(t, "pool-2", got.Labels[v1.LabelTopologyRegion])
 	assert.Equal(t, "pool-2", got.Labels[v1.LabelFailureDomainBetaRegion])
-	assert.Equal(t, "pool-1", got.Labels[xenorchestra.XOLabelTopologyOriginalPoolID])
+	assert.Equal(t, "pool-1", got.Labels[xok8s.XOLabelTopologyOriginalPoolID])
 
 	evs := drainEvents(recorder, 1, 500*time.Millisecond)
 	if assert.Equal(t, len(evs), 1, "expected at least one event") {
@@ -226,7 +226,7 @@ func TestUpdateNodeLabels_APIFailure(t *testing.T) {
 	// Labels should not have been updated due to API error
 	assert.Equal(t, "host-1", got.Labels[v1.LabelTopologyZone])
 	assert.Empty(t, got.Labels[v1.LabelFailureDomainBetaZone])
-	assert.Empty(t, got.Labels[xenorchestra.XOLabelTopologyOriginalHostID])
+	assert.Empty(t, got.Labels[xok8s.XOLabelTopologyOriginalHostID])
 
 	// No events should be emitted when the API update fails
 	evs := drainEvents(recorder, 2, 200*time.Millisecond)

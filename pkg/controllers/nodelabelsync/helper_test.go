@@ -21,17 +21,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudprovider "k8s.io/cloud-provider"
+
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 // Create instance metadata with additional labels
 var instanceMetadataTest = &cloudprovider.InstanceMetadata{
 	AdditionalLabels: map[string]string{
-		xenorchestra.XOLabelNamespace + "/test-label": "test-value",
+		xok8s.XOLabelNamespace + "/test-label": "test-value",
 	},
 	Zone:         "zone-1",
 	Region:       "region-1",
@@ -64,10 +64,10 @@ func TestGetNodeLabelUpdate_ReturnsNilForTaintedNode(t *testing.T) {
 
 func TestGetNodeLabelUpdate_AddsOrUpdatesXONamespaceLabels(t *testing.T) {
 	// Labels to test
-	expectedXOLabel1 := xenorchestra.XOLabelNamespace + "/custom-label"
-	expectedXOLabel2 := xenorchestra.XOLabelNamespace + "/another-label"
-	existingXOLabel1 := xenorchestra.XOLabelNamespace + "/existing-label"
-	existingXOLabel2 := xenorchestra.XOLabelNamespace + "/another-existing-label"
+	expectedXOLabel1 := xok8s.XOLabelNamespace + "/custom-label"
+	expectedXOLabel2 := xok8s.XOLabelNamespace + "/another-label"
+	existingXOLabel1 := xok8s.XOLabelNamespace + "/existing-label"
+	existingXOLabel2 := xok8s.XOLabelNamespace + "/another-existing-label"
 
 	// Create a node without cloud taint and without existing XO labels
 	node := &v1.Node{
@@ -111,7 +111,7 @@ func TestGetNodeLabelUpdate_AddsOrUpdatesXONamespaceLabels(t *testing.T) {
 	// Assert that the result contains the expected number of XO labels
 	xoLabelCount := 0
 	for key := range result {
-		if strings.Contains(key, xenorchestra.XOLabelNamespace) {
+		if strings.Contains(key, xok8s.XOLabelNamespace) {
 			xoLabelCount++
 		}
 	}
@@ -137,7 +137,7 @@ func TestGetNodeLabelUpdate_ZoneChangedAddsOriginalHostAndUpdatesLabels(t *testi
 
 	assert.Equal(t, "zone-2", result[v1.LabelTopologyZone], "zone label should be updated")
 	assert.Equal(t, "zone-2", result[v1.LabelFailureDomainBetaZone], "beta zone label should be updated")
-	assert.Equal(t, "zone-1", result[xenorchestra.XOLabelTopologyOriginalHostID], "original host id should be set to previous zone")
+	assert.Equal(t, "zone-1", result[xok8s.XOLabelTopologyOriginalHostID], "original host id should be set to previous zone")
 }
 
 func TestGetNodeLabelUpdate_ZoneChangedDoesNotOverrideOriginalHostIfExists(t *testing.T) {
@@ -145,8 +145,8 @@ func TestGetNodeLabelUpdate_ZoneChangedDoesNotOverrideOriginalHostIfExists(t *te
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-2",
 			Labels: map[string]string{
-				v1.LabelTopologyZone:                       "zone-1",
-				xenorchestra.XOLabelTopologyOriginalHostID: "already-present",
+				v1.LabelTopologyZone:                "zone-1",
+				xok8s.XOLabelTopologyOriginalHostID: "already-present",
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
@@ -158,7 +158,7 @@ func TestGetNodeLabelUpdate_ZoneChangedDoesNotOverrideOriginalHostIfExists(t *te
 
 	assert.Equal(t, "zone-3", result[v1.LabelTopologyZone])
 	assert.Equal(t, "zone-3", result[v1.LabelFailureDomainBetaZone])
-	assert.NotContains(t, result, xenorchestra.XOLabelTopologyOriginalHostID, "should not override existing original host id label")
+	assert.NotContains(t, result, xok8s.XOLabelTopologyOriginalHostID, "should not override existing original host id label")
 }
 
 func TestGetNodeLabelUpdate_RegionChangedAddsOriginalPoolAndUpdatesLabels(t *testing.T) {
@@ -178,7 +178,7 @@ func TestGetNodeLabelUpdate_RegionChangedAddsOriginalPoolAndUpdatesLabels(t *tes
 
 	assert.Equal(t, "region-2", result[v1.LabelTopologyRegion], "region label should be updated")
 	assert.Equal(t, "region-2", result[v1.LabelFailureDomainBetaRegion], "beta region label should be updated")
-	assert.Equal(t, "region-1", result[xenorchestra.XOLabelTopologyOriginalPoolID], "original pool id should be set to previous region")
+	assert.Equal(t, "region-1", result[xok8s.XOLabelTopologyOriginalPoolID], "original pool id should be set to previous region")
 }
 
 func TestGetNodeLabelUpdate_RegionChangedDoesNotOverrideOriginalPoolIfExists(t *testing.T) {
@@ -186,8 +186,8 @@ func TestGetNodeLabelUpdate_RegionChangedDoesNotOverrideOriginalPoolIfExists(t *
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-4",
 			Labels: map[string]string{
-				v1.LabelTopologyRegion:                     "region-1",
-				xenorchestra.XOLabelTopologyOriginalPoolID: "already-present",
+				v1.LabelTopologyRegion:              "region-1",
+				xok8s.XOLabelTopologyOriginalPoolID: "already-present",
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
@@ -199,7 +199,7 @@ func TestGetNodeLabelUpdate_RegionChangedDoesNotOverrideOriginalPoolIfExists(t *
 
 	assert.Equal(t, "region-3", result[v1.LabelTopologyRegion])
 	assert.Equal(t, "region-3", result[v1.LabelFailureDomainBetaRegion])
-	assert.NotContains(t, result, xenorchestra.XOLabelTopologyOriginalPoolID, "should not override existing original pool id label")
+	assert.NotContains(t, result, xok8s.XOLabelTopologyOriginalPoolID, "should not override existing original pool id label")
 }
 
 func TestGetNodeLabelUpdate_InstanceTypeChangedUpdatesBothLabels(t *testing.T) {
@@ -227,10 +227,10 @@ func TestGetNodeLabelUpdate_NoChangesReturnsEmpty(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-6",
 			Labels: map[string]string{
-				v1.LabelTopologyZone:                          instanceMetadataTest.Zone,
-				v1.LabelTopologyRegion:                        instanceMetadataTest.Region,
-				v1.LabelInstanceTypeStable:                    instanceMetadataTest.InstanceType,
-				xenorchestra.XOLabelNamespace + "/test-label": instanceMetadataTest.AdditionalLabels[xenorchestra.XOLabelNamespace+"/test-label"],
+				v1.LabelTopologyZone:                   instanceMetadataTest.Zone,
+				v1.LabelTopologyRegion:                 instanceMetadataTest.Region,
+				v1.LabelInstanceTypeStable:             instanceMetadataTest.InstanceType,
+				xok8s.XOLabelNamespace + "/test-label": instanceMetadataTest.AdditionalLabels[xok8s.XOLabelNamespace+"/test-label"],
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},

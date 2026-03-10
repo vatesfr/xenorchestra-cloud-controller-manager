@@ -21,22 +21,22 @@ import (
 	"context"
 	"io"
 
-	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
-
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
+
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 const (
 	// ProviderName is the name of the Xen Orchestra provider.
-	ProviderName = provider.ProviderName
+	ProviderName = xok8s.ProviderName
 
 	// ServiceAccountName is the service account name used in kube-system namespace.
-	ServiceAccountName = provider.ProviderName + "-cloud-controller-manager"
+	ServiceAccountName = xok8s.ProviderName + "-cloud-controller-manager"
 )
 
 type cloud struct {
-	client      *XoClient
+	client      *xok8s.XoClient
 	instancesV2 cloudprovider.InstancesV2
 
 	ctx  context.Context //nolint:containedctx
@@ -44,8 +44,8 @@ type cloud struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(provider.ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := ReadCloudConfig(config)
+	cloudprovider.RegisterCloudProvider(xok8s.ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
+		cfg, err := xok8s.ReadCloudConfig(config)
 		if err != nil {
 			klog.ErrorS(err, "failed to read config")
 
@@ -56,8 +56,8 @@ func init() {
 	})
 }
 
-func newCloud(config *XoConfig) (cloudprovider.Interface, error) {
-	client, err := NewXOClient(config)
+func newCloud(config *xok8s.XoConfig) (cloudprovider.Interface, error) {
+	client, err := xok8s.NewXOClient(config)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (c *cloud) Routes() (cloudprovider.Routes, bool) {
 
 // ProviderName returns the cloud provider ID.
 func (c *cloud) ProviderName() string {
-	return provider.ProviderName
+	return xok8s.ProviderName
 }
 
 // HasClusterID is not implemented.

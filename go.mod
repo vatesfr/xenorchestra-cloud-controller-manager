@@ -8,8 +8,8 @@ require (
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	github.com/vatesfr/xenorchestra-go-sdk v1.11.0-beta.1
-	gopkg.in/yaml.v3 v3.0.1
+	github.com/vatesfr/xenorchestra-go-sdk v1.13.0
+	github.com/vatesfr/xenorchestra-k8s-common v0.0.0
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
@@ -18,6 +18,8 @@ require (
 	k8s.io/controller-manager v0.34.1
 	k8s.io/klog/v2 v2.130.1
 )
+
+replace github.com/vatesfr/xenorchestra-k8s-common => ../xenorchestra-k8s-common
 
 require (
 	cel.dev/expr v0.24.0 // indirect
@@ -105,6 +107,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiserver v0.34.1 // indirect
 	k8s.io/component-helpers v0.34.1 // indirect
 	k8s.io/kms v0.34.1 // indirect

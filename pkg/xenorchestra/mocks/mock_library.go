@@ -94,6 +94,34 @@ func (mr *MockLibraryMockRecorder) V1Client() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V1Client", reflect.TypeOf((*MockLibrary)(nil).V1Client))
 }
 
+// VBD mocks base method.
+func (m *MockLibrary) VBD() library.VBD {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VBD")
+	ret0, _ := ret[0].(library.VBD)
+	return ret0
+}
+
+// VBD indicates an expected call of VBD.
+func (mr *MockLibraryMockRecorder) VBD() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VBD", reflect.TypeOf((*MockLibrary)(nil).VBD))
+}
+
+// VDI mocks base method.
+func (m *MockLibrary) VDI() library.VDI {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VDI")
+	ret0, _ := ret[0].(library.VDI)
+	return ret0
+}
+
+// VDI indicates an expected call of VDI.
+func (mr *MockLibraryMockRecorder) VDI() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VDI", reflect.TypeOf((*MockLibrary)(nil).VDI))
+}
+
 // VM mocks base method.
 func (m *MockLibrary) VM() library.VM {
 	m.ctrl.T.Helper()
@@ -218,6 +246,21 @@ func (m *MockVM) GetByID(arg0 context.Context, arg1 uuid.UUID) (*payloads.VM, er
 func (mr *MockVMMockRecorder) GetByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockVM)(nil).GetByID), arg0, arg1)
+}
+
+// GetVDIs mocks base method.
+func (m *MockVM) GetVDIs(arg0 context.Context, arg1 uuid.UUID, arg2 int, arg3 string) ([]*payloads.VDI, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVDIs", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]*payloads.VDI)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVDIs indicates an expected call of GetVDIs.
+func (mr *MockVMMockRecorder) GetVDIs(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVDIs", reflect.TypeOf((*MockVM)(nil).GetVDIs), arg0, arg1, arg2, arg3)
 }
 
 // HardReboot mocks base method.
@@ -408,6 +451,20 @@ func (m *MockHost) EXPECT() *MockHostMockRecorder {
 	return m.recorder
 }
 
+// AddTag mocks base method.
+func (m *MockHost) AddTag(arg0 context.Context, arg1 uuid.UUID, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddTag", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddTag indicates an expected call of AddTag.
+func (mr *MockHostMockRecorder) AddTag(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockHost)(nil).AddTag), arg0, arg1, arg2)
+}
+
 // Get mocks base method.
 func (m *MockHost) Get(arg0 context.Context, arg1 uuid.UUID) (*payloads.Host, error) {
 	m.ctrl.T.Helper()
@@ -436,6 +493,20 @@ func (m *MockHost) GetAll(arg0 context.Context, arg1 int, arg2 string) ([]*paylo
 func (mr *MockHostMockRecorder) GetAll(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockHost)(nil).GetAll), arg0, arg1, arg2)
+}
+
+// RemoveTag mocks base method.
+func (m *MockHost) RemoveTag(arg0 context.Context, arg1 uuid.UUID, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveTag", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveTag indicates an expected call of RemoveTag.
+func (mr *MockHostMockRecorder) RemoveTag(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTag", reflect.TypeOf((*MockHost)(nil).RemoveTag), arg0, arg1, arg2)
 }
 
 // MockPool is a mock of Pool interface.

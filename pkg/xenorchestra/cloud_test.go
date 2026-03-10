@@ -22,18 +22,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	provider "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 )
 
 func TestNewCloudError(t *testing.T) {
-	cloud, err := newCloud(&XoConfig{})
+	cloud, err := newCloud(&xok8s.XoConfig{})
 	assert.NotNil(t, err)
 	assert.Nil(t, cloud)
 	assert.EqualError(t, err, "url is required")
 }
 
 func TestCloud(t *testing.T) {
-	cfg, err := ReadCloudConfig(strings.NewReader(`
+	cfg, err := xok8s.ReadCloudConfig(strings.NewReader(`
 url: https://example.com
 insecure: false
 token: "12ABC"
@@ -70,7 +70,7 @@ token: "12ABC"
 	assert.Equal(t, res, false)
 
 	pName := cloud.ProviderName()
-	assert.Equal(t, pName, provider.ProviderName)
+	assert.Equal(t, pName, xok8s.ProviderName)
 
 	clID := cloud.HasClusterID()
 	assert.Equal(t, clID, true)
