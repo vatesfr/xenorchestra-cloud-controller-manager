@@ -18,59 +18,60 @@ package xenorchestra
 import (
 	"testing"
 
-	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 )
 
-func TestConvertLittleEndianUUID(t *testing.T) {
+func TestGetInstanceType(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    string
+		vm       *payloads.VM
 		expected string
 	}{
 		{
-			name:     "All zeros",
-			input:    "00000000-0000-0000-0000-000000000000",
-			expected: "00000000-0000-0000-0000-000000000000",
+			name: "2 vCPU 4 GB",
+			vm: &payloads.VM{
+				CPUs:   payloads.CPUs{Max: 2},
+				Memory: payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			},
+			expected: "2vCPU-4GB",
 		},
 		{
-			name:     "All ones",
-			input:    "ffffffff-ffff-ffff-ffff-ffffffffffff",
-			expected: "ffffffff-ffff-ffff-ffff-ffffffffffff",
-		},
-		{
-			name:     "Example 1",
-			input:    "59aee6ae-f0b8-a2bd-a89d-55638d1e9725",
-			expected: "aee6ae59-b8f0-bda2-a89d-55638d1e9725",
-		},
-		{
-			name:     "Example 2",
-			input:    "6c0bc35f-7e48-34fe-04c3-67812e3b17a7",
-			expected: "5fc30b6c-487e-fe34-04c3-67812e3b17a7",
-		},
-		{
-			name:     "Example 3",
-			input:    "77f4080b-1a49-82a9-23c4-d224723624ea",
-			expected: "0b08f477-491a-a982-23c4-d224723624ea",
-		},
-		{
-			name:     "Example 4",
-			input:    "6a87cb0f-ca4c-ffa5-3ca2-fc398fb25eac",
-			expected: "0fcb876a-4cca-a5ff-3ca2-fc398fb25eac",
+			name: "4 vCPU 8 GB",
+			vm: &payloads.VM{
+				CPUs:   payloads.CPUs{Max: 4},
+				Memory: payloads.Memory{Size: 8 * 1024 * 1024 * 1024},
+			},
+			expected: "4vCPU-8GB",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			input, err := uuid.FromString(tt.input)
-			assert.NoError(t, err, "Failed to parse input UUID")
+			result := getInstanceType(tt.vm)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
 
-			expected, err := uuid.FromString(tt.expected)
-			assert.NoError(t, err, "Failed to parse expected UUID")
+func TestSanitizeToLabel(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "clean string", input: "hello-world", expected: "hello-world"},
+		{name: "spaces replaced", input: "hello world", expected: "hello-world"},
+		{name: "leading dash trimmed", input: "-hello", expected: "hello"},
+		{name: "trailing dash trimmed", input: "hello-", expected: "hello"},
+		{name: "truncated to 63", input: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+	}
 
-			result := convertLittleEndianUUID(input)
-
-			assert.Equal(t, expected, result, "Converted UUID does not match expected value")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := sanitizeToLabel(tt.input)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }

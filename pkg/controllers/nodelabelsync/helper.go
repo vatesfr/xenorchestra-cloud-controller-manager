@@ -18,7 +18,7 @@ package nodelabelsync
 import (
 	"strings"
 
-	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
@@ -42,7 +42,7 @@ func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceM
 	nodeLabels := node.Labels
 	labelsToUpdate := map[string]string{}
 	for key, value := range instanceMetadata.AdditionalLabels {
-		if !strings.Contains(key, xenorchestra.XOLabelNamespace) {
+		if !strings.Contains(key, xok8s.XOLabelNamespace) {
 			continue
 		}
 		if nodeVal, exists := nodeLabels[key]; !exists || nodeVal != value {
@@ -60,8 +60,8 @@ func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceM
 	existingZone, hasZone := nodeLabels[v1.LabelTopologyZone]
 	if hasZone && instanceMetadata.Zone != "" && existingZone != instanceMetadata.Zone {
 		klog.V(2).Infof("Node %s zone has changed (VM host has changed): old=%s, new=%s", node.Name, existingZone, instanceMetadata.Zone)
-		if _, exists := nodeLabels[xenorchestra.XOLabelTopologyOriginalHostID]; !exists {
-			labelsToUpdate[xenorchestra.XOLabelTopologyOriginalHostID] = nodeLabels[v1.LabelTopologyZone]
+		if _, exists := nodeLabels[xok8s.XOLabelTopologyOriginalHostID]; !exists {
+			labelsToUpdate[xok8s.XOLabelTopologyOriginalHostID] = nodeLabels[v1.LabelTopologyZone]
 		}
 		labelsToUpdate[v1.LabelTopologyZone] = instanceMetadata.Zone
 		labelsToUpdate[v1.LabelFailureDomainBetaZone] = instanceMetadata.Zone
@@ -72,8 +72,8 @@ func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceM
 	existingRegion, hasRegion := nodeLabels[v1.LabelTopologyRegion]
 	if hasRegion && instanceMetadata.Region != "" && existingRegion != instanceMetadata.Region {
 		klog.V(2).Infof("Node %s region has changed (VM pool has changed): old=%s, new=%s", node.Name, existingRegion, instanceMetadata.Region)
-		if _, exists := nodeLabels[xenorchestra.XOLabelTopologyOriginalPoolID]; !exists {
-			labelsToUpdate[xenorchestra.XOLabelTopologyOriginalPoolID] = nodeLabels[v1.LabelTopologyRegion]
+		if _, exists := nodeLabels[xok8s.XOLabelTopologyOriginalPoolID]; !exists {
+			labelsToUpdate[xok8s.XOLabelTopologyOriginalPoolID] = nodeLabels[v1.LabelTopologyRegion]
 		}
 		labelsToUpdate[v1.LabelTopologyRegion] = instanceMetadata.Region
 		labelsToUpdate[v1.LabelFailureDomainBetaRegion] = instanceMetadata.Region

@@ -27,9 +27,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/provider"
 	mock_library "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra/mocks"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -164,7 +164,7 @@ func (ts *ccmTestSuite) SetupTest() {
 	mockLib.EXPECT().Host().Return(mockHost).AnyTimes()
 	mockLib.EXPECT().Pool().Return(mockPool).AnyTimes()
 	// Inject mock into XOClient
-	client := &XoClient{
+	client := &xok8s.XoClient{
 		Client: mockLib,
 	}
 	ts.i = newInstances(client)
@@ -624,110 +624,6 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			} else {
 				ts.Require().NoError(err)
 				ts.Require().Equal(testCase.expected, meta)
-			}
-		})
-	}
-}
-
-func TestGetProviderID(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		msg      string
-		pool     uuid.UUID
-		vmr      *payloads.VM
-		expected string
-	}{
-		{
-			msg:      "empty region",
-			pool:     uuid.Nil,
-			vmr:      &payloads.VM{ID: uuid.Must(uuid.FromString("123e4567-e89b-12d3-a456-426614174001"))},
-			expected: "xenorchestra:///123e4567-e89b-12d3-a456-426614174001",
-		},
-		{
-			msg:  "region",
-			pool: uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			vmr: &payloads.VM{
-				ID:     uuid.Must(uuid.FromString("123e4567-e89b-12d3-a456-426614174001")),
-				PoolID: uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			},
-			expected: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d/123e4567-e89b-12d3-a456-426614174001",
-		},
-	}
-
-	for _, testCase := range tests {
-		t.Run(fmt.Sprint(testCase.msg), func(t *testing.T) {
-			t.Parallel()
-
-			expected := provider.GetProviderID(testCase.pool, testCase.vmr)
-			assert.Equal(t, expected, testCase.expected)
-		})
-	}
-}
-
-func TestParseProviderID(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		msg            string
-		magic          string
-		expectedPoolID uuid.UUID
-		expectedVmr    *payloads.VM
-		expectedError  error
-	}{
-		{
-			msg:           "Empty magic string",
-			magic:         "",
-			expectedError: fmt.Errorf("foreign providerID or empty \"\""),
-		},
-		{
-			msg:           "Wrong provider",
-			magic:         "provider://region/550e8400-e29b-41d4-a716-446655440001",
-			expectedError: fmt.Errorf("foreign providerID or empty \"provider://region/550e8400-e29b-41d4-a716-446655440001\""),
-		},
-		{
-			msg:            "Empty region",
-			magic:          "xenorchestra:///123e4567-e89b-12d3-a456-426614174001",
-			expectedPoolID: uuid.Nil,
-			expectedVmr:    &payloads.VM{ID: uuid.Must(uuid.FromString("123e4567-e89b-12d3-a456-426614174001"))},
-		},
-		{
-			msg:           "Empty region",
-			magic:         "xenorchestra://550e8400-e29b-41d4-a716-446655440001",
-			expectedError: fmt.Errorf("providerID \"xenorchestra://550e8400-e29b-41d4-a716-446655440001\" didn't match expected format \"xenorchestra://PoolID/InstanceID\""),
-		},
-		{
-			msg:            "PoolID and InstanceID",
-			magic:          "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d/123e4567-e89b-12d3-a456-426614174001",
-			expectedPoolID: uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			expectedVmr: &payloads.VM{
-				ID:     uuid.Must(uuid.FromString("123e4567-e89b-12d3-a456-426614174001")),
-				PoolID: uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			},
-		},
-		{
-			msg:           "PoolID and wrong InstanceID",
-			magic:         "xenorchestra://pool/name",
-			expectedError: fmt.Errorf("InstanceID have to be an UUID, but got \"name\""),
-		},
-		{
-			msg:           "InstanceID and wrong PoolID",
-			magic:         "xenorchestra://PoolID/123e4567-e89b-12d3-a456-426614174001",
-			expectedError: fmt.Errorf("PoolID have to be an UUID, but got \"PoolID\""),
-		},
-	}
-
-	for _, testCase := range tests {
-		t.Run(fmt.Sprint(testCase.msg), func(t *testing.T) {
-			t.Parallel()
-
-			vmr, pool, err := provider.ParseProviderID(testCase.magic)
-
-			if testCase.expectedError != nil {
-				assert.Equal(t, testCase.expectedError, err)
-			} else {
-				assert.Equal(t, testCase.expectedVmr, vmr)
-				assert.Equal(t, testCase.expectedPoolID, pool)
 			}
 		})
 	}
