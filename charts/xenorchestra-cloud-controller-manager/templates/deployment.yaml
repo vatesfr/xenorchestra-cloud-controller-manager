@@ -141,7 +141,7 @@ spec:
             secretName: {{ .Values.existingConfigSecret }}
             items:
               - key: {{ .Values.existingConfigSecretKey }}
-                path: xo-config.yaml
+                path: {{ .Values.existingConfigSecretPath }}
             defaultMode: 416
         {{- else }}
         - name: cloud-config
