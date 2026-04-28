@@ -43,6 +43,8 @@ logVerbosityLevel: 2
 existingConfigSecret: ~
 # -- Xen Orchestra cluster config stored in secrets key.
 existingConfigSecretKey: config.yaml
+# -- Xen Orchestra cluster config mount path inside the pod.
+existingConfigSecretPath: config.yaml
 
 # -- Xen Orchestra cluster config.
 config:
