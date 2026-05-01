@@ -9,7 +9,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/vatesfr/xenorchestra-go-sdk v1.13.0
-	github.com/vatesfr/xenorchestra-k8s-common v0.1.0
+	github.com/vatesfr/xenorchestra-k8s-common v0.2.0
 	k8s.io/api v0.35.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/client-go v0.35.1
