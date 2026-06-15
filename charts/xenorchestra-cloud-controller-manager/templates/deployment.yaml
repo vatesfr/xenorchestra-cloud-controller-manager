@@ -62,7 +62,9 @@ spec:
           args:
             - --v={{ .Values.logVerbosityLevel }}
             - --cloud-provider=xenorchestra
+            {{- if .Values.config }}
             - --cloud-config=/etc/xenorchestra/config.yaml
+            {{- end }}
             - --controllers={{- trimAll "," (include "xenorchestra-cloud-controller-manager.enabledControllers" . ) }}
             - --leader-elect-resource-name=cloud-controller-manager-xenorchestra
             - --use-service-account-credentials
@@ -92,13 +94,17 @@ spec:
             timeoutSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or .Values.config .Values.extraVolumeMounts }}
           volumeMounts:
+            {{- if .Values.config }}
             - name: cloud-config
               mountPath: /etc/xenorchestra
               readOnly: true
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -134,7 +140,9 @@ spec:
             matchLabels:
               {{- include "xenorchestra-cloud-controller-manager.selectorLabels" . | nindent 14 }}
       {{- end }}
+      {{- if or .Values.config .Values.extraVolumes }}
       volumes:
+        {{- if .Values.config }}
         {{- if .Values.existingConfigSecret }}
         - name: cloud-config
           secret:
@@ -149,6 +157,8 @@ spec:
             secretName: {{ include "xenorchestra-cloud-controller-manager.fullname" . }}
             defaultMode: 416
         {{- end }}
+        {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- end }}
