@@ -14,20 +14,30 @@ The CCM maps Kubernetes topology labels to Xen Orchestra objects:
 
 ## 🧩 Configuration
 
+### Using a config file
+
+You can provide a configuration file to the CCM using the `--cloud-config` flag. Example:
+
 ```yaml
 # config.yaml
 # URL of the Xen Orchestra API (http or https)
 url: https://xoa.example.com
 insecure: false
-
-# Authentication (choose one)
 token: "123ABC"
-# username: admin@admin.net
-# password: "s3cret"
 ```
 
-* Either `token` **or** `username`/`password` is required.
+* `token` is required.
 * `url` must include a scheme; set `insecure: true` only when you explicitly want to skip TLS verification.
+
+### Using environment variables
+
+You can also provide configuration via environment variables:
+
+| Environment variable | Description |
+|----------------------|-------------|
+| `XOA_URL` | URL of the Xen Orchestra API (http or https) |
+| `XOA_TOKEN` | API token for authentication |
+| `XOA_INSECURE` | Whether to skip TLS verification |
 
 ## 📌 Node labels and providerID
 

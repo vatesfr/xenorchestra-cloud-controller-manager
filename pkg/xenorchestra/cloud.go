@@ -65,9 +65,20 @@ type cloud struct {
 
 func init() {
 	cloudprovider.RegisterCloudProvider(xok8s.ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
-		cfg, err := xok8s.ReadCloudConfig(config)
+		if config != nil {
+			cfg, err := xok8s.ReadCloudConfig(config)
+			if err != nil {
+				klog.ErrorS(err, "failed to read config")
+
+				return nil, err
+			}
+
+			return newCloud(&cfg)
+		}
+
+		cfg, err := xok8s.LoadXOConfigFromEnv()
 		if err != nil {
-			klog.ErrorS(err, "failed to read config")
+			klog.ErrorS(err, "failed to read config from environment")
 
 			return nil, err
 		}
