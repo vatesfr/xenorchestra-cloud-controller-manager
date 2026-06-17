@@ -4,12 +4,12 @@ go 1.25.8
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/golang/mock v1.6.0
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/vatesfr/xenorchestra-go-sdk v1.13.0
 	github.com/vatesfr/xenorchestra-k8s-common v0.1.0
+	go.uber.org/mock v0.6.0
 	k8s.io/api v0.35.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/client-go v0.35.1
