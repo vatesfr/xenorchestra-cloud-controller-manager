@@ -42,6 +42,7 @@ To build this project, you must have the following installed:
 - make
 - golang 1.20+
 - golangci-lint
+- git-cliff
 
 endef
 
@@ -125,7 +126,11 @@ docs:
 	helm-docs --sort-values-order=file charts/xenorchestra-cloud-controller-manager
 
 release-update:
-	git-chglog --config hack/chglog-config.yml -o CHANGELOG.md
+ifdef RELEASE_TAG
+	git-cliff --config cliff.toml --tag $(RELEASE_TAG) --unreleased --prepend CHANGELOG.md
+else
+	git-cliff --config cliff.toml --unreleased --prepend CHANGELOG.md
+endif
 
 ############
 #
