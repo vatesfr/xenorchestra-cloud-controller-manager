@@ -42,7 +42,7 @@ var testNode = &v1.Node{
 			v1.LabelTopologyZone:                   "host-1",
 			v1.LabelTopologyRegion:                 "pool-1",
 			v1.LabelInstanceTypeStable:             "2vCPU-2GB",
-			xok8s.XOLabelNamespace + "/test-label": "test-value",
+			xok8s.XOLabelNamespace + "/test-label": testValue,
 		},
 	},
 	Spec: v1.NodeSpec{Taints: []v1.Taint{}},
@@ -79,7 +79,7 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 		Region:       "pool-1",
 		InstanceType: "2vCPU-2GB",
 		AdditionalLabels: map[string]string{
-			xok8s.XOLabelNamespace + "/test-label": "test-value",
+			xok8s.XOLabelNamespace + "/test-label": testValue,
 		},
 	}
 
@@ -94,7 +94,7 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 	assert.Equal(t, "host-1", got.Labels[v1.LabelTopologyZone])
 	assert.Equal(t, "pool-1", got.Labels[v1.LabelTopologyRegion])
 	assert.Equal(t, "2vCPU-2GB", got.Labels[v1.LabelInstanceTypeStable])
-	assert.Equal(t, "test-value", got.Labels[xok8s.XOLabelNamespace+"/test-label"])
+	assert.Equal(t, testValue, got.Labels[xok8s.XOLabelNamespace+"/test-label"])
 
 	// No events should be emitted
 	evs := drainEvents(recorder, 1, 150*time.Millisecond)

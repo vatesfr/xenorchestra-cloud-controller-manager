@@ -32,6 +32,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
+const unknownLabel = "unknown"
+
 // XOInstances defines the interface for VM instance operations
 type XOInstances interface {
 	// GetInstance returns the VM reference for the given node.
@@ -174,7 +176,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 		klog.ErrorS(err, "instances.InstanceMetadata() failed to get host info", "hostID", vmRef.Container.String())
 		hostRef = &payloads.Host{
 			ID:        vmRef.Container,
-			NameLabel: "unknown",
+			NameLabel: unknownLabel,
 		}
 	}
 
@@ -184,7 +186,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 		klog.ErrorS(err, "instances.InstanceMetadata() failed to get pool info", "poolID", vmRef.PoolID.String())
 		poolRef = &payloads.Pool{
 			ID:        vmRef.PoolID,
-			NameLabel: "unknown",
+			NameLabel: unknownLabel,
 		}
 	}
 

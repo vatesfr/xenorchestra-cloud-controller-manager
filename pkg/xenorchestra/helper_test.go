@@ -55,6 +55,7 @@ func TestGetInstanceType(t *testing.T) {
 	}
 }
 
+//nolint:goconst // nolint for readability
 func TestSanitizeToLabel(t *testing.T) {
 	tests := []struct {
 		name     string

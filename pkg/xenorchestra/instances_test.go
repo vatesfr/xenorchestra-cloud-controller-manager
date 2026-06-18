@@ -37,6 +37,71 @@ import (
 	cloudproviderapi "k8s.io/cloud-provider/api"
 )
 
+const (
+	pool1Node1        = "pool-1-node-1"
+	pool1Node3        = "pool-1-node-3"
+	pool1Node500      = "pool-1-node-500"
+	pool2Node1        = "pool-2-node-1"
+	pool3Node1        = "pool-3-node-1"
+	poolZNode4        = "pool-z-node-4"
+	poolUnknownNode1  = "pool-unknown-node-1"
+	cluster1Node2     = "cluster-1-node-2"
+	cluster1Node500   = "cluster-1-node-500"
+	sanitizedTestNode = "test-node"
+	runningState      = "Running"
+	haltedState       = "Halted"
+	nodeExternalIP1   = "10.0.0.1"
+	nodeExternalIP2   = "10.0.0.2"
+	nodeExternalIP3   = "10.0.0.3"
+	nodeExternalIP4   = "10.0.0.4"
+	publicIP1         = "1.2.3.4"
+	publicIP2         = "1.2.3.5"
+	publicIP3         = "1.2.3.6"
+	publicIPv6        = "2001::1"
+	publicDualStack   = publicIP1 + "," + publicIPv6
+	testHost1         = "test-host-1"
+	testHost2         = "test-host-2"
+	testPool1         = "test-pool-1"
+	testPool2         = "test-pool-2"
+	testNode1         = "test-node-1"
+	instanceType1     = "4vCPU-10GB"
+	instanceType2     = "2vCPU-4GB"
+	instanceType3     = "8vCPU-16GB"
+
+	labelXOHostID   = "topology.k8s.xenorchestra/host_id"
+	labelXOPoolID   = "topology.k8s.xenorchestra/pool_id"
+	labelXOHostName = "topology.k8s.xenorchestra/host_name_label"
+	labelXOPoolName = "topology.k8s.xenorchestra/pool_name_label"
+	labelXOVMName   = "vm.k8s.xenorchestra/name_label"
+
+	vmPool1Node1ID  = "550e8400-e29b-41d4-a716-446655440001"
+	vmPool2Node1ID  = "550e8400-e29b-41d4-a716-446655440002"
+	vmPool1Node3ID  = "550e8400-e29b-41d4-a716-446655440003"
+	vmPoolZNode4ID  = "550e8400-e29b-41d4-a716-446655440004"
+	vmMissingID     = "550e8400-e29b-41d4-a716-446655440005"
+	vmAPINotFoundID = "48b8425b-469a-4b4b-860e-635568e5445a"
+
+	pool1ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d"
+	pool2ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d"
+	pool3ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d"
+	poolMissingID = "ffffffff-ffff-4fff-afff-ffffffffffff"
+	host1ID       = "8af7110d-bfad-407a-a663-9527d10a6583"
+	hostMissingID = "8af7110d-bfad-407a-a663-9527d10a6584"
+	host2ID       = "8af7110d-bfad-407a-a663-9527d10a6586"
+
+	nodeForeignProviderID      = "NodeForeignProviderID"
+	nodeForeignProviderURI     = "foreign://provider-id"
+	xenorchestraProviderScheme = "xenorchestra://"
+	providerURIPool1Node1      = xenorchestraProviderScheme + pool1ID + "/" + vmPool1Node1ID
+	providerURIPool2Node1      = xenorchestraProviderScheme + pool2ID + "/" + vmPool2Node1ID
+	providerURIPool1Node3      = xenorchestraProviderScheme + pool1ID + "/" + vmPool1Node3ID
+	providerURIPoolZNode4      = xenorchestraProviderScheme + poolMissingID + "/" + vmPoolZNode4ID
+	providerURIMissingVM       = xenorchestraProviderScheme + pool1ID + "/" + vmMissingID
+	providerURIWrongPool       = xenorchestraProviderScheme + pool3ID + "/" + vmPool1Node1ID
+	nodeExists                 = "NodeExists"
+	nodeNotExists              = "NodeNotExists"
+)
+
 type ccmTestSuite struct {
 	suite.Suite
 	ctrl *gomock.Controller
@@ -50,89 +115,90 @@ func (ts *ccmTestSuite) SetupTest() {
 	mockVM := mock_library.NewMockVM(ts.ctrl)
 	mockVM.EXPECT().GetAll(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*payloads.VM{
 		{
-			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
+			ID:        uuid.Must(uuid.FromString(vmPool1Node1ID)),
 			NameLabel: "test1-vm",
-			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container: uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
+			PoolID:    uuid.Must(uuid.FromString(pool1ID)),
+			Container: uuid.FromStringOrNil(host1ID),
 		},
 		{
-			ID:        uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
+			ID:        uuid.Must(uuid.FromString(vmPool2Node1ID)),
 			NameLabel: "test2-vm",
-			PoolID:    uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container: uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
+			PoolID:    uuid.Must(uuid.FromString(pool2ID)),
+			Container: uuid.FromStringOrNil(host2ID),
 		},
 	}, nil).AnyTimes()
 
-	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001"))).Return(
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmPool1Node1ID))).Return(
 		&payloads.VM{
-			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440001")),
-			NameLabel:     "pool-1-node-1",
-			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
+			ID:            uuid.Must(uuid.FromString(vmPool1Node1ID)),
+			NameLabel:     pool1Node1,
+			PoolID:        uuid.Must(uuid.FromString(pool1ID)),
+			Container:     uuid.FromStringOrNil(host1ID),
 			CPUs:          payloads.CPUs{Max: 4},
 			Memory:        payloads.Memory{Size: 10 * 1024 * 1024 * 1024},
-			PowerState:    "Running",
-			MainIpAddress: "10.0.0.1",
+			PowerState:    runningState,
+			MainIpAddress: nodeExternalIP1,
 		}, nil).AnyTimes()
 
-	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002"))).Return(
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmPool2Node1ID))).Return(
 		&payloads.VM{
-			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440002")),
-			NameLabel:     "pool-2-node-1",
-			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")),
-			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			ID:            uuid.Must(uuid.FromString(vmPool2Node1ID)),
+			NameLabel:     pool2Node1,
+			PoolID:        uuid.Must(uuid.FromString(pool2ID)),
+			Container:     uuid.FromStringOrNil(host2ID),
 			CPUs:          payloads.CPUs{Max: 2},
 			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
-			PowerState:    "Halted",
-			MainIpAddress: "10.0.0.2",
+			PowerState:    haltedState,
+			MainIpAddress: nodeExternalIP2,
 		}, nil).AnyTimes()
 
 	// Mock VM for testing host retrieval error
-	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003"))).Return(
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmPool1Node3ID))).Return(
 		&payloads.VM{
-			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440003")),
-			NameLabel:     "pool-1-node-3",
-			PoolID:        uuid.Must(uuid.FromString("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")),
-			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584"),
+			ID:            uuid.Must(uuid.FromString(vmPool1Node3ID)),
+			NameLabel:     pool1Node3,
+			PoolID:        uuid.Must(uuid.FromString(pool1ID)),
+			Container:     uuid.FromStringOrNil(hostMissingID),
 			CPUs:          payloads.CPUs{Max: 8},
 			Memory:        payloads.Memory{Size: 16 * 1024 * 1024 * 1024},
-			PowerState:    "Running",
-			MainIpAddress: "10.0.0.3",
+			PowerState:    runningState,
+			MainIpAddress: nodeExternalIP3,
 		}, nil).AnyTimes()
 
 	// Mock VM for testing pool retrieval error
-	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004"))).Return(
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmPoolZNode4ID))).Return(
 		&payloads.VM{
-			ID:            uuid.Must(uuid.FromString("550e8400-e29b-41d4-a716-446655440004")),
-			NameLabel:     "pool-z-node-4",
-			PoolID:        uuid.Must(uuid.FromString("ffffffff-ffff-4fff-afff-ffffffffffff")),
-			Container:     uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
+			ID:            uuid.Must(uuid.FromString(vmPoolZNode4ID)),
+			NameLabel:     poolZNode4,
+			PoolID:        uuid.Must(uuid.FromString(poolMissingID)),
+			Container:     uuid.FromStringOrNil(host2ID),
 			CPUs:          payloads.CPUs{Max: 2},
 			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
-			PowerState:    "Running",
-			MainIpAddress: "10.0.0.4",
+			PowerState:    runningState,
+			MainIpAddress: nodeExternalIP4,
 		}, nil).AnyTimes()
 
-	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf(`API error: 404 Not Found - {
-	"error": "no such VM 48b8425b-469a-4b4b-860e-635568e5445a"
-}`)).AnyTimes()
+	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(
+		nil,
+		fmt.Errorf("API error: 404 Not Found - {\n\t\"error\": \"no such VM %s\"\n}", vmAPINotFoundID),
+	).AnyTimes()
 
 	// Mock Host service
 	mockHost := mock_library.NewMockHost(ts.ctrl)
-	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583")).Return(
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(host1ID)).Return(
 		&payloads.Host{
-			ID:        uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6583"),
-			NameLabel: "test-host-1",
+			ID:        uuid.FromStringOrNil(host1ID),
+			NameLabel: testHost1,
 		}, nil).AnyTimes()
 
-	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586")).Return(
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(host2ID)).Return(
 		&payloads.Host{
-			ID:        uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6586"),
-			NameLabel: "test-host-2",
+			ID:        uuid.FromStringOrNil(host2ID),
+			NameLabel: testHost2,
 		}, nil).AnyTimes()
 
 	// Mock Host.Get for a specific UUID that will return an error
-	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("8af7110d-bfad-407a-a663-9527d10a6584")).Return(
+	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(hostMissingID)).Return(
 		nil, fmt.Errorf("API error: 404 Not Found - host not found")).AnyTimes()
 
 	// // Default mock for any other Host.Get call
@@ -143,19 +209,19 @@ func (ts *ccmTestSuite) SetupTest() {
 	// 	}, nil).AnyTimes()
 
 	mockPool := mock_library.NewMockPool(ts.ctrl)
-	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d")).Return(
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(pool1ID)).Return(
 		&payloads.Pool{
-			ID:        uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d"),
-			NameLabel: "test-pool-1",
+			ID:        uuid.FromStringOrNil(pool1ID),
+			NameLabel: testPool1,
 		}, nil).AnyTimes()
 
-	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d")).Return(
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(pool2ID)).Return(
 		&payloads.Pool{
-			ID:        uuid.FromStringOrNil("a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d"),
-			NameLabel: "test-pool-2",
+			ID:        uuid.FromStringOrNil(pool2ID),
+			NameLabel: testPool2,
 		}, nil).AnyTimes()
 
-	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil("ffffffff-ffff-4fff-afff-ffffffffffff")).Return(
+	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(poolMissingID)).Return(
 		nil, fmt.Errorf("API error: 404 Not Found - pool not found")).AnyTimes()
 
 	// Mock Library
@@ -190,7 +256,7 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 			msg: "EmptyProviderID",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "",
@@ -199,13 +265,13 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 			expected: true,
 		},
 		{
-			msg: "NodeForeignProviderID",
+			msg: nodeForeignProviderID,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "foreign://provider-id",
+					ProviderID: nodeForeignProviderURI,
 				},
 			},
 			expected: true,
@@ -214,35 +280,35 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 			msg: "NodeWrongPool",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-1",
+					Name: pool1Node1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d/550e8400-e29b-41d4-a716-446655440001",
+					ProviderID: providerURIWrongPool,
 				},
 			},
 			expected:      false,
-			expectedError: "instances.getInstance() error: vm.PoolID=a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d mismatches nodePoolID=a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d",
+			expectedError: "instances.getInstance() error: vm.PoolID=" + pool1ID + " mismatches nodePoolID=" + pool3ID,
 		},
 		{
-			msg: "NodeNotExists",
+			msg: nodeNotExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-500",
+					Name: pool1Node500,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
+					ProviderID: providerURIMissingVM,
 				},
 			},
 			expected: false,
 		},
 		{
-			msg: "NodeExists",
+			msg: nodeExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-1",
+					Name: pool1Node1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
+					ProviderID: providerURIPool1Node1,
 				},
 			},
 			expected: true,
@@ -252,10 +318,10 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 			msg: "NodeExistsWithDifferentName",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-3",
+					Name: pool1Node3,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
+					ProviderID: providerURIPool1Node1,
 				},
 			},
 			expected: true,
@@ -290,7 +356,7 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 			msg: "EptyProviderID",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "",
@@ -299,43 +365,38 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 			expected: false,
 		},
 		{
-			msg: "NodeForeignProviderID",
+			msg: nodeForeignProviderID,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "foreign://provider-id",
+					ProviderID: nodeForeignProviderURI,
 				},
 			},
 			expected: false,
 		},
 		{
-			msg: "NodeNotExists",
+			msg: nodeNotExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-500",
+					Name: cluster1Node500,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
+					ProviderID: providerURIMissingVM,
 				},
 			},
 			expected:      false,
-			expectedError: "vm not found: xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
+			expectedError: "vm not found: " + providerURIMissingVM,
 		},
 		{
-			msg: "NodeExists",
+			msg: nodeExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-1",
+					Name: pool1Node1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
-				},
-				Status: v1.NodeStatus{
-					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "8af7110d-bfad-407a-a663-9527d10a6583",
-					},
+					ProviderID: providerURIPool1Node1,
 				},
 			},
 			expected: false,
@@ -344,10 +405,10 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 			msg: "NodeExistsStopped",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "cluster-1-node-2",
+					Name: cluster1Node2,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d/550e8400-e29b-41d4-a716-446655440002",
+					ProviderID: providerURIPool2Node1,
 				},
 			},
 			expected: true,
@@ -384,22 +445,22 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			msg: "NodeEmptyProviderAndSystemUUID",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
 					ProviderID: "",
 				},
 			},
-			expectedError: "instances.InstanceMetadata() - failed to find instance by uuid test-node-1: node SystemUUID is empty: foreign providerID or empty \"\", skipped",
+			expectedError: "instances.InstanceMetadata() - failed to find instance by uuid " + testNode1 + ": node SystemUUID is empty: foreign providerID or empty \"\", skipped",
 		},
 		{
-			msg: "NodeForeignProviderID",
+			msg: nodeForeignProviderID,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-node-1",
+					Name: testNode1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "foreign://provider-id",
+					ProviderID: nodeForeignProviderURI,
 				},
 			},
 			expected: &cloudprovider.InstanceMetadata{},
@@ -408,68 +469,68 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			msg: "NodeWrongPool",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-3-node-1",
+					Name: pool3Node1,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d/550e8400-e29b-41d4-a716-446655440001",
+					ProviderID: providerURIWrongPool,
 				},
 			},
 			expected:      &cloudprovider.InstanceMetadata{},
-			expectedError: "instances.getInstance() error: vm.PoolID=a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d mismatches nodePoolID=a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f3d",
+			expectedError: "instances.getInstance() error: vm.PoolID=" + pool1ID + " mismatches nodePoolID=" + pool3ID,
 		},
 		{
-			msg: "NodeNotExists",
+			msg: nodeNotExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-500",
+					Name: pool1Node500,
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440005",
+					ProviderID: providerURIMissingVM,
 				},
 			},
 			expected:      &cloudprovider.InstanceMetadata{},
 			expectedError: cloudprovider.InstanceNotFound.Error(),
 		},
 		{
-			msg: "NodeExists",
+			msg: nodeExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-1",
+					Name: pool1Node1,
 					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.4",
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: publicIP1,
 					},
 				},
 				Status: v1.NodeStatus{
 					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "550e8400-e29b-41d4-a716-446655440001",
+						SystemUUID: vmPool1Node1ID,
 					},
 				},
 			},
 			expected: &cloudprovider.InstanceMetadata{
-				ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
+				ProviderID: providerURIPool1Node1,
 				NodeAddresses: []v1.NodeAddress{
 					{
 						Type:    v1.NodeInternalIP,
-						Address: "1.2.3.4",
+						Address: publicIP1,
 					},
 					{
 						Type:    v1.NodeExternalIP,
-						Address: "10.0.0.1",
+						Address: nodeExternalIP1,
 					},
 					{
 						Type:    v1.NodeHostName,
-						Address: "pool-1-node-1",
+						Address: pool1Node1,
 					},
 				},
-				InstanceType: "4vCPU-10GB",
-				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
+				InstanceType: instanceType1,
+				Region:       pool1ID,
+				Zone:         host1ID,
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6583",
-					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-					"vm.k8s.xenorchestra/name_label":            "pool-1-node-1",
-					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
-					"topology.k8s.xenorchestra/host_name_label": "test-host-1",
+					labelXOHostID:   host1ID,
+					labelXOPoolID:   pool1ID,
+					labelXOVMName:   pool1Node1,
+					labelXOPoolName: testPool1,
+					labelXOHostName: testHost1,
 				},
 			},
 		},
@@ -477,46 +538,46 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			msg: "NodeExistsDualstack",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-1",
+					Name: pool1Node1,
 					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.4,2001::1",
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: publicDualStack,
 					},
 				},
 				Status: v1.NodeStatus{
 					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "550e8400-e29b-41d4-a716-446655440001",
+						SystemUUID: vmPool1Node1ID,
 					},
 				},
 			},
 			expected: &cloudprovider.InstanceMetadata{
-				ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440001",
+				ProviderID: providerURIPool1Node1,
 				NodeAddresses: []v1.NodeAddress{
 					{
 						Type:    v1.NodeInternalIP,
-						Address: "1.2.3.4",
+						Address: publicIP1,
 					},
 					{
 						Type:    v1.NodeInternalIP,
-						Address: "2001::1",
+						Address: publicIPv6,
 					},
 					{
 						Type:    v1.NodeExternalIP,
-						Address: "10.0.0.1",
+						Address: nodeExternalIP1,
 					},
 					{
 						Type:    v1.NodeHostName,
-						Address: "pool-1-node-1",
+						Address: pool1Node1,
 					},
 				},
-				InstanceType: "4vCPU-10GB",
-				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-				Zone:         "8af7110d-bfad-407a-a663-9527d10a6583",
+				InstanceType: instanceType1,
+				Region:       pool1ID,
+				Zone:         host1ID,
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6583",
-					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-					"vm.k8s.xenorchestra/name_label":            "pool-1-node-1",
-					"topology.k8s.xenorchestra/host_name_label": "test-host-1",
-					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
+					labelXOHostID:   host1ID,
+					labelXOPoolID:   pool1ID,
+					labelXOVMName:   pool1Node1,
+					labelXOHostName: testHost1,
+					labelXOPoolName: testPool1,
 				},
 			},
 		},
@@ -524,45 +585,45 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			msg: "NodeExistsHostRetrievalError",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-1-node-3",
+					Name: pool1Node3,
 					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.5",
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: publicIP2,
 					},
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440003",
+					ProviderID: providerURIPool1Node3,
 				},
 				Status: v1.NodeStatus{
 					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "550e8400-e29b-41d4-a716-446655440003",
+						SystemUUID: vmPool1Node3ID,
 					},
 				},
 			},
 			expected: &cloudprovider.InstanceMetadata{
-				ProviderID: "xenorchestra://a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d/550e8400-e29b-41d4-a716-446655440003",
+				ProviderID: providerURIPool1Node3,
 				NodeAddresses: []v1.NodeAddress{
 					{
 						Type:    v1.NodeInternalIP,
-						Address: "1.2.3.5",
+						Address: publicIP2,
 					},
 					{
 						Type:    v1.NodeExternalIP,
-						Address: "10.0.0.3",
+						Address: nodeExternalIP3,
 					},
 					{
 						Type:    v1.NodeHostName,
-						Address: "pool-1-node-3",
+						Address: pool1Node3,
 					},
 				},
-				InstanceType: "8vCPU-16GB",
-				Region:       "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-				Zone:         "8af7110d-bfad-407a-a663-9527d10a6584",
+				InstanceType: instanceType3,
+				Region:       pool1ID,
+				Zone:         hostMissingID,
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6584",
-					"topology.k8s.xenorchestra/pool_id":         "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d",
-					"vm.k8s.xenorchestra/name_label":            "pool-1-node-3",
-					"topology.k8s.xenorchestra/host_name_label": "unknown",
-					"topology.k8s.xenorchestra/pool_name_label": "test-pool-1",
+					labelXOHostID:   hostMissingID,
+					labelXOPoolID:   pool1ID,
+					labelXOVMName:   pool1Node3,
+					labelXOHostName: unknownLabel,
+					labelXOPoolName: testPool1,
 				},
 			},
 		},
@@ -570,45 +631,45 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			msg: "NodeExistsPoolRetrievalError",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "pool-unknown-node-1",
+					Name: poolUnknownNode1,
 					Annotations: map[string]string{
-						cloudproviderapi.AnnotationAlphaProvidedIPAddr: "1.2.3.6",
+						cloudproviderapi.AnnotationAlphaProvidedIPAddr: publicIP3,
 					},
 				},
 				Spec: v1.NodeSpec{
-					ProviderID: "xenorchestra://ffffffff-ffff-4fff-afff-ffffffffffff/550e8400-e29b-41d4-a716-446655440004",
+					ProviderID: providerURIPoolZNode4,
 				},
 				Status: v1.NodeStatus{
 					NodeInfo: v1.NodeSystemInfo{
-						SystemUUID: "550e8400-e29b-41d4-a716-446655440004",
+						SystemUUID: vmPoolZNode4ID,
 					},
 				},
 			},
 			expected: &cloudprovider.InstanceMetadata{
-				ProviderID: "xenorchestra://ffffffff-ffff-4fff-afff-ffffffffffff/550e8400-e29b-41d4-a716-446655440004",
+				ProviderID: providerURIPoolZNode4,
 				NodeAddresses: []v1.NodeAddress{
 					{
 						Type:    v1.NodeInternalIP,
-						Address: "1.2.3.6",
+						Address: publicIP3,
 					},
 					{
 						Type:    v1.NodeExternalIP,
-						Address: "10.0.0.4",
+						Address: nodeExternalIP4,
 					},
 					{
 						Type:    v1.NodeHostName,
-						Address: "pool-unknown-node-1",
+						Address: poolUnknownNode1,
 					},
 				},
-				InstanceType: "2vCPU-4GB",
-				Region:       "ffffffff-ffff-4fff-afff-ffffffffffff",
-				Zone:         "8af7110d-bfad-407a-a663-9527d10a6586",
+				InstanceType: instanceType2,
+				Region:       poolMissingID,
+				Zone:         host2ID,
 				AdditionalLabels: map[string]string{
-					"topology.k8s.xenorchestra/host_id":         "8af7110d-bfad-407a-a663-9527d10a6586",
-					"topology.k8s.xenorchestra/pool_id":         "ffffffff-ffff-4fff-afff-ffffffffffff",
-					"vm.k8s.xenorchestra/name_label":            "pool-z-node-4",
-					"topology.k8s.xenorchestra/host_name_label": "test-host-2",
-					"topology.k8s.xenorchestra/pool_name_label": "unknown",
+					labelXOHostID:   host2ID,
+					labelXOPoolID:   poolMissingID,
+					labelXOVMName:   poolZNode4,
+					labelXOHostName: testHost2,
+					labelXOPoolName: unknownLabel,
 				},
 			},
 		},
@@ -655,27 +716,27 @@ func TestSanitizeLabel(t *testing.T) {
 		{
 			msg:            "String with invalid characters",
 			input:          "test@node#1",
-			expectedString: "test-node-1",
+			expectedString: testNode1,
 		},
 		{
 			msg:            "String with spaces",
 			input:          "test node 1",
-			expectedString: "test-node-1",
+			expectedString: testNode1,
 		},
 		{
 			msg:            "String with leading invalid characters",
 			input:          "###test-node",
-			expectedString: "test-node",
+			expectedString: sanitizedTestNode,
 		},
 		{
 			msg:            "String with trailing invalid characters",
 			input:          "test-node###",
-			expectedString: "test-node",
+			expectedString: sanitizedTestNode,
 		},
 		{
 			msg:            "String with leading and trailing invalid characters",
 			input:          "###test-node###",
-			expectedString: "test-node",
+			expectedString: sanitizedTestNode,
 		},
 		{
 			msg:            "String longer than 63 characters",
