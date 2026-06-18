@@ -28,13 +28,23 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 )
 
+const (
+	testValue   = "test-value"
+	testZone1   = "zone-1"
+	testZone2   = "zone-2"
+	testZone3   = "zone-3"
+	testRegion1 = "region-1"
+	testRegion2 = "region-2"
+	testRegion3 = "region-3"
+)
+
 // Create instance metadata with additional labels
 var instanceMetadataTest = &cloudprovider.InstanceMetadata{
 	AdditionalLabels: map[string]string{
-		xok8s.XOLabelNamespace + "/test-label": "test-value",
+		xok8s.XOLabelNamespace + "/test-label": testValue,
 	},
-	Zone:         "zone-1",
-	Region:       "region-1",
+	Zone:         testZone1,
+	Region:       testRegion1,
 	InstanceType: "vm-type-1",
 }
 
@@ -125,19 +135,19 @@ func TestGetNodeLabelUpdate_ZoneChangedAddsOriginalHostAndUpdatesLabels(t *testi
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-1",
 			Labels: map[string]string{
-				v1.LabelTopologyZone: "zone-1",
+				v1.LabelTopologyZone: testZone1,
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
 	}
 
-	meta := &cloudprovider.InstanceMetadata{Zone: "zone-2"}
+	meta := &cloudprovider.InstanceMetadata{Zone: testZone2}
 
 	result := getNodeLabelUpdate(node, meta)
 
-	assert.Equal(t, "zone-2", result[v1.LabelTopologyZone], "zone label should be updated")
-	assert.Equal(t, "zone-2", result[v1.LabelFailureDomainBetaZone], "beta zone label should be updated")
-	assert.Equal(t, "zone-1", result[xok8s.XOLabelTopologyOriginalHostID], "original host id should be set to previous zone")
+	assert.Equal(t, testZone2, result[v1.LabelTopologyZone], "zone label should be updated")
+	assert.Equal(t, testZone2, result[v1.LabelFailureDomainBetaZone], "beta zone label should be updated")
+	assert.Equal(t, testZone1, result[xok8s.XOLabelTopologyOriginalHostID], "original host id should be set to previous zone")
 }
 
 func TestGetNodeLabelUpdate_ZoneChangedDoesNotOverrideOriginalHostIfExists(t *testing.T) {
@@ -145,19 +155,19 @@ func TestGetNodeLabelUpdate_ZoneChangedDoesNotOverrideOriginalHostIfExists(t *te
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-2",
 			Labels: map[string]string{
-				v1.LabelTopologyZone:                "zone-1",
+				v1.LabelTopologyZone:                testZone1,
 				xok8s.XOLabelTopologyOriginalHostID: "already-present",
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
 	}
 
-	meta := &cloudprovider.InstanceMetadata{Zone: "zone-3"}
+	meta := &cloudprovider.InstanceMetadata{Zone: testZone3}
 
 	result := getNodeLabelUpdate(node, meta)
 
-	assert.Equal(t, "zone-3", result[v1.LabelTopologyZone])
-	assert.Equal(t, "zone-3", result[v1.LabelFailureDomainBetaZone])
+	assert.Equal(t, testZone3, result[v1.LabelTopologyZone])
+	assert.Equal(t, testZone3, result[v1.LabelFailureDomainBetaZone])
 	assert.NotContains(t, result, xok8s.XOLabelTopologyOriginalHostID, "should not override existing original host id label")
 }
 
@@ -166,19 +176,19 @@ func TestGetNodeLabelUpdate_RegionChangedAddsOriginalPoolAndUpdatesLabels(t *tes
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-3",
 			Labels: map[string]string{
-				v1.LabelTopologyRegion: "region-1",
+				v1.LabelTopologyRegion: testRegion1,
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
 	}
 
-	meta := &cloudprovider.InstanceMetadata{Region: "region-2"}
+	meta := &cloudprovider.InstanceMetadata{Region: testRegion2}
 
 	result := getNodeLabelUpdate(node, meta)
 
-	assert.Equal(t, "region-2", result[v1.LabelTopologyRegion], "region label should be updated")
-	assert.Equal(t, "region-2", result[v1.LabelFailureDomainBetaRegion], "beta region label should be updated")
-	assert.Equal(t, "region-1", result[xok8s.XOLabelTopologyOriginalPoolID], "original pool id should be set to previous region")
+	assert.Equal(t, testRegion2, result[v1.LabelTopologyRegion], "region label should be updated")
+	assert.Equal(t, testRegion2, result[v1.LabelFailureDomainBetaRegion], "beta region label should be updated")
+	assert.Equal(t, testRegion1, result[xok8s.XOLabelTopologyOriginalPoolID], "original pool id should be set to previous region")
 }
 
 func TestGetNodeLabelUpdate_RegionChangedDoesNotOverrideOriginalPoolIfExists(t *testing.T) {
@@ -186,19 +196,19 @@ func TestGetNodeLabelUpdate_RegionChangedDoesNotOverrideOriginalPoolIfExists(t *
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node-4",
 			Labels: map[string]string{
-				v1.LabelTopologyRegion:              "region-1",
+				v1.LabelTopologyRegion:              testRegion1,
 				xok8s.XOLabelTopologyOriginalPoolID: "already-present",
 			},
 		},
 		Spec: v1.NodeSpec{Taints: []v1.Taint{}},
 	}
 
-	meta := &cloudprovider.InstanceMetadata{Region: "region-3"}
+	meta := &cloudprovider.InstanceMetadata{Region: testRegion3}
 
 	result := getNodeLabelUpdate(node, meta)
 
-	assert.Equal(t, "region-3", result[v1.LabelTopologyRegion])
-	assert.Equal(t, "region-3", result[v1.LabelFailureDomainBetaRegion])
+	assert.Equal(t, testRegion3, result[v1.LabelTopologyRegion])
+	assert.Equal(t, testRegion3, result[v1.LabelFailureDomainBetaRegion])
 	assert.NotContains(t, result, xok8s.XOLabelTopologyOriginalPoolID, "should not override existing original pool id label")
 }
 
