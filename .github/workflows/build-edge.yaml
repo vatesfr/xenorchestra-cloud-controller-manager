@@ -11,6 +11,7 @@ on:
       - 'cmd/**'
       - 'pkg/**'
       - 'Dockerfile'
+      - 'Makefile'
 
 jobs:
   build-publish:

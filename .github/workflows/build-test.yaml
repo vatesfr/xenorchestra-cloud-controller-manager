@@ -10,11 +10,12 @@ on:
       - 'cmd/**'
       - 'pkg/**'
       - 'Dockerfile'
+      - 'Makefile'
 
 jobs:
   build:
     name: Build
-    timeout-minutes: 15
+    timeout-minutes: 25
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,3 +38,8 @@ jobs:
       - name: Build
         timeout-minutes: 10
         run: make build
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build image
+        timeout-minutes: 10
+        run: VERSION=v0.0.0-test make images
