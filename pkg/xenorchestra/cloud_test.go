@@ -17,12 +17,17 @@ limitations under the License.
 package xenorchestra
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestNewCloudError(t *testing.T) {
@@ -74,4 +79,69 @@ token: "12ABC"
 
 	clID := cloud.HasClusterID()
 	assert.Equal(t, clID, true)
+}
+
+func TestRecordCloudProviderInitializationFailure(t *testing.T) {
+	client := fake.NewClientset()
+
+	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	assert.NoError(t, err)
+
+	events, err := client.EventsV1().Events(metav1.NamespaceSystem).List(t.Context(), metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Len(t, events.Items, 1)
+
+	event := events.Items[0]
+	assert.Equal(t, corev1.EventTypeWarning, event.Type)
+	assert.Equal(t, eventActionCheckClient, event.Action)
+	assert.Equal(t, eventReasonFailedToCheckClient, event.Reason)
+	assert.Contains(t, event.Note, "tls: failed to verify certificate")
+	assert.Equal(t, ProviderName, event.ReportingController)
+	assert.Equal(t, cloudControllerManagerClientName, event.ReportingInstance)
+	assert.Equal(t, metav1.NamespaceSystem, event.Regarding.Namespace)
+	assert.Equal(t, ProviderName, event.Regarding.Name)
+	assert.Equal(t, componentKind, event.Regarding.Kind)
+	assert.Nil(t, event.Series)
+}
+
+func TestRecordCloudProviderInitializationFailureUsesPodReference(t *testing.T) {
+	t.Setenv(podNameEnv, "xoccm-123")
+	t.Setenv(podNamespaceEnv, "custom-system")
+	t.Setenv(podUIDEnv, "87db141c-8f50-4b8e-9d23-0c8de730216a")
+
+	client := fake.NewClientset()
+
+	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	assert.NoError(t, err)
+
+	events, err := client.EventsV1().Events("custom-system").List(t.Context(), metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Len(t, events.Items, 1)
+
+	event := events.Items[0]
+	assert.Equal(t, "custom-system", event.Namespace)
+	assert.Equal(t, "custom-system", event.Regarding.Namespace)
+	assert.Equal(t, "xoccm-123", event.Regarding.Name)
+	assert.Equal(t, podKind, event.Regarding.Kind)
+	assert.Equal(t, "87db141c-8f50-4b8e-9d23-0c8de730216a", string(event.Regarding.UID))
+	assert.Equal(t, "xoccm-123", event.ReportingInstance)
+}
+
+func TestRecordCloudProviderInitializationFailureUpdatesExistingEventSeries(t *testing.T) {
+	t.Setenv(podNameEnv, "xoccm-123")
+	t.Setenv(podNamespaceEnv, "custom-system")
+	t.Setenv(podUIDEnv, "87db141c-8f50-4b8e-9d23-0c8de730216a")
+
+	client := fake.NewClientset()
+
+	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	assert.NoError(t, err)
+	err = recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	assert.NoError(t, err)
+
+	events, err := client.EventsV1().Events("custom-system").List(t.Context(), metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Len(t, events.Items, 1)
+	assert.NotNil(t, events.Items[0].Series)
+	assert.Equal(t, int32(2), events.Items[0].Series.Count)
 }

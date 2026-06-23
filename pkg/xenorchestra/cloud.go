@@ -19,10 +19,21 @@ package xenorchestra
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"io"
+	"os"
+	"time"
 
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
+	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	clientset "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -33,6 +44,15 @@ const (
 
 	// ServiceAccountName is the service account name used in kube-system namespace.
 	ServiceAccountName = xok8s.ProviderName + "-cloud-controller-manager"
+
+	cloudControllerManagerClientName = "xenorchestra-cloud-controller-manager"
+	componentKind                    = "Component"
+	podKind                          = "Pod"
+	podNameEnv                       = "POD_NAME"
+	podNamespaceEnv                  = "POD_NAMESPACE"
+	podUIDEnv                        = "POD_UID"
+	eventActionCheckClient           = "CheckClient"
+	eventReasonFailedToCheckClient   = "FailedToCheckClient"
 )
 
 type cloud struct {
@@ -84,6 +104,11 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 	err := c.client.CheckClient(ctx)
 	if err != nil {
 		klog.ErrorS(err, "failed to check Xen Orchestra client")
+		kubeClient := clientBuilder.ClientOrDie(cloudControllerManagerClientName)
+		if eventErr := recordCloudProviderInitializationFailure(ctx, kubeClient, err); eventErr != nil {
+			klog.ErrorS(eventErr, "failed to record Xen Orchestra client check failure event")
+		}
+		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
 	}
 
 	// Broadcast the upstream stop signal to all provider-level goroutines
@@ -95,6 +120,101 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 	}(c)
 
 	klog.InfoS("Xen Orchestra client initialized")
+}
+
+func recordCloudProviderInitializationFailure(ctx context.Context, kubeClient clientset.Interface, err error) error {
+	eventTime := metav1.MicroTime{Time: time.Now()}
+	regarding := cloudProviderEventObjectReference()
+	event := &eventsv1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cloudProviderEventName(regarding),
+			Namespace: cloudProviderEventNamespace(),
+		},
+		EventTime:           eventTime,
+		ReportingController: ProviderName,
+		ReportingInstance:   cloudProviderEventReportingInstance(),
+		Action:              eventActionCheckClient,
+		Reason:              eventReasonFailedToCheckClient,
+		Regarding:           regarding,
+		Note:                fmt.Sprintf("Failed to check Xen Orchestra client: %v", err),
+		Type:                corev1.EventTypeWarning,
+	}
+
+	eventsClient := kubeClient.EventsV1().Events(cloudProviderEventNamespace())
+	if _, createErr := eventsClient.Create(ctx, event, metav1.CreateOptions{}); createErr != nil {
+		if !apierrors.IsAlreadyExists(createErr) {
+			return createErr
+		}
+
+		existingEvent, getErr := eventsClient.Get(ctx, event.Name, metav1.GetOptions{})
+		if getErr != nil {
+			return getErr
+		}
+
+		event.ResourceVersion = existingEvent.ResourceVersion
+		event.EventTime = existingEvent.EventTime
+		event.Series = &eventsv1.EventSeries{
+			Count:            2,
+			LastObservedTime: eventTime,
+		}
+		if existingEvent.Series != nil {
+			event.Series.Count = existingEvent.Series.Count + 1
+		}
+
+		_, updateErr := eventsClient.Update(ctx, event, metav1.UpdateOptions{})
+		return updateErr
+	}
+
+	return nil
+}
+
+func cloudProviderEventName(regarding corev1.ObjectReference) string {
+	hashInput := fmt.Sprintf("%s/%s/%s/%s/%s/%s",
+		regarding.Namespace,
+		regarding.Kind,
+		regarding.Name,
+		regarding.UID,
+		eventActionCheckClient,
+		eventReasonFailedToCheckClient,
+	)
+	hash := sha256.Sum256([]byte(hashInput))
+
+	return fmt.Sprintf("%s-%s", ProviderName, hex.EncodeToString(hash[:])[:12])
+}
+
+func cloudProviderEventObjectReference() corev1.ObjectReference {
+	if podName := os.Getenv(podNameEnv); podName != "" {
+		return corev1.ObjectReference{
+			APIVersion: "v1",
+			Kind:       podKind,
+			Namespace:  cloudProviderEventNamespace(),
+			Name:       podName,
+			UID:        types.UID(os.Getenv(podUIDEnv)),
+		}
+	}
+
+	return corev1.ObjectReference{
+		APIVersion: "v1",
+		Kind:       componentKind,
+		Namespace:  cloudProviderEventNamespace(),
+		Name:       ProviderName,
+	}
+}
+
+func cloudProviderEventNamespace() string {
+	if podNamespace := os.Getenv(podNamespaceEnv); podNamespace != "" {
+		return podNamespace
+	}
+
+	return metav1.NamespaceSystem
+}
+
+func cloudProviderEventReportingInstance() string {
+	if podName := os.Getenv(podNameEnv); podName != "" {
+		return podName
+	}
+
+	return cloudControllerManagerClientName
 }
 
 // LoadBalancer returns a balancer interface.

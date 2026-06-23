@@ -22,6 +22,14 @@ rules:
   - patch
   - update
 - apiGroups:
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - get
+  - create
+  - update
+- apiGroups:
   - ""
   resources:
   - nodes
