@@ -22,7 +22,14 @@ extraEnvs: []
   #   value: 127.0.0.1
 
 # -- Any extra arguments for xenorchestra-cloud-controller-manager
-extraArgs: []
+# -- You can also configure Xen-Orchestra values env variables instead of using a config file.
+extraArgs: [
+  # -- Url the Xen Orchestra API
+  "XOA_URL": "http://xoa-main.cogent1.vates.team",
+  "XOA_INSECURE": "true",
+  # -- Token for Xen Orchestra API
+  "XOA_TOKEN": "123ABC",
+]
 # --cluster-name=kubernetes
 
 # -- List of controllers should be enabled.
@@ -47,11 +54,13 @@ existingConfigSecretKey: config.yaml
 existingConfigSecretPath: config.yaml
 
 # -- Xen Orchestra cluster config.
+# You can provide a necessary configuration for the CCM using a config file.
+# It will be stored in a secret and mounted inside the CCM pod.
 config:
   # -- Url the Xen Orchestra API
   # url: https://xoa.example.com
   # insecure: false
-  # -- Token for ta Xen Orchestra API
+  # -- Token for Xen Orchestra API
   # token: "123ABC"
 
 # -- Pods Service Account.
