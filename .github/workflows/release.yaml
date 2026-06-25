@@ -6,9 +6,9 @@ on:
       - 'v*'
 
 jobs:
-  build-publish:
-    name: "Build image and publish"
-    timeout-minutes: 15
+  release:
+    name: Publish image and Helm chart
+    timeout-minutes: 25
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,11 +17,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Unshallow
-        run: git fetch --prune --unshallow
+        with:
+          fetch-depth: 0
+
+      - name: Validate release
+        shell: bash
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]; then
+            echo "Invalid release tag: $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+          # Check if the release commit is an ancestor of the main branch
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+          expected_app_version="${GITHUB_REF_NAME%-*}"
+          app_version="$(sed -n 's/^appVersion: //p' charts/xenorchestra-cloud-controller-manager/Chart.yaml)"
+          if [ "$app_version" != "$expected_app_version" ]; then
+            echo "Chart appVersion ($app_version) must match the application version ($expected_app_version)"
+            exit 1
+          fi
+
+          echo "APP_VERSION=$app_version" >> "$GITHUB_ENV"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.1
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.13.3
 
       - name: Set up docker buildx
         uses: docker/setup-buildx-action@v4
@@ -33,23 +58,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push edge
+      - name: Build and push image
         timeout-minutes: 10
         run: make images
         env:
           PUSH: "true"
-          TAG: "edge"
-      - name: Sign images
+          TAG: ${{ env.APP_VERSION }}
+          VERSION: ${{ env.APP_VERSION }}
+      - name: Sign image
         timeout-minutes: 4
         run: make images-cosign
         env:
-          TAG: "edge"
+          TAG: ${{ env.APP_VERSION }}
 
-      - name: Build and push
-        timeout-minutes: 10
-        run: make images
+      - name: Publish and sign Helm chart
+        timeout-minutes: 5
+        run: make helm-login helm-release
         env:
-          PUSH: "true"
-      - name: Sign images
-        timeout-minutes: 4
-        run: make images-cosign
+          HELM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
