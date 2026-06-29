@@ -1,3 +1,58 @@
+<a name="v1.1.0"></a>
+## [v1.1.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0...v1.1.0) (2026-06-29)
+
+Welcome to the v1.1.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- **git-cliff:** use simple-quote to not double escape \d regex
+- **helm:** use extraEnvs instead of extraArgs for env vars
+- **chart/rolebinding:** use serviceAccountName for service account
+- **cloud:** remove unused ServiceAccountName const
+- docker image version
+- go-const lint
+- **chart:** add existingConfigSecretPath value to fix hardcoded mount path
+
+### Features
+
+- **chart:** Allow usage of env var instead of secret config file for xo config
+- add XoConfig loading from environment variables
+- add event when initialization fail
+- replace git-chglog by git-cliff
+
+### Changelog
+
+* aca5e6d build: use git-cliff regex
+* 147ce7a fix(git-cliff): use simple-quote to not double escape \d regex
+* fc15fe1 ci: make ct.yaml check version follow new release method
+* 1b8d8f6 fix(helm): use extraEnvs instead of extraArgs for env vars
+* 2d16c0f fix(chart/rolebinding): use serviceAccountName for service account
+* 7cad032 fix(cloud): remove unused ServiceAccountName const
+* 7d15eea build(deps): bump github.com/vatesfr/xenorchestra-go-sdk
+* 25923e7 docs: add envfrom secret example
+* 390b7d0 feat(chart): Allow usage of env var instead of secret config file for xo config
+* 4f44e8e feat: add XoConfig loading from environment variables
+* 582d6d1 feat: add event when initialization fail
+* eaeba88 ci: update chart releasing and tag convention
+* ac967c9 fix: docker image version
+* 8bb7b8c build(ci): add docker-build step in CI job
+* 36e379a build(deps): bump the k8s-io group across 1 directory with 5 updates
+* 9eabc8a build(deps): update xo sdk to 1.15.1
+* e575359 feat: replace git-chglog by git-cliff
+* d8f5586 test: replace gomock by uber mockgen
+* 72b95ad fix: go-const lint
+* 5a89c53 build(deps): bump docker/setup-buildx-action from 3 to 4
+* c7d0390 build(deps): bump docker/login-action from 3 to 4
+* 742ec3e build(deps): bump k8s.io/klog/v2 from 2.130.1 to 2.140.0
+* bf1ff6e build(deps): bump sigstore/cosign-installer from 4.0.0 to 4.1.1
+* f012773 build(deps): bump azure/setup-helm from 4 to 5
+* aeeee88 fix(chart): add existingConfigSecretPath value to fix hardcoded mount path
+* 31a3873 build(deps): upgrade golang version to 1.25.8-alpine
+* 97330d2 style: linting
+* dfd0fbe build(deps): upgrade to go 1.25.8 to fix stdlib vulnerabilities, set fixed version for xenorchestra-k8s-common, upgrade k8s.io deps
+* 90653b4 refactor: delegate shared XO/k8s logic to xenorchestra-k8s-common
+* 54c3a51 build: remove version specification for golangci-lint-action
+* 0ead73f chore: release v1.0.0
 
 <a name="v1.0.0"></a>
 ## [v1.0.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0-rc.3...v1.0.0) (2026-03-05)
