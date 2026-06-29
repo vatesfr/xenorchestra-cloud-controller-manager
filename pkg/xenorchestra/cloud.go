@@ -42,9 +42,6 @@ const (
 	// ProviderName is the name of the Xen Orchestra provider.
 	ProviderName = xok8s.ProviderName
 
-	// ServiceAccountName is the service account name used in kube-system namespace.
-	ServiceAccountName = xok8s.ProviderName + "-cloud-controller-manager"
-
 	cloudControllerManagerClientName = "xenorchestra-cloud-controller-manager"
 	componentKind                    = "Component"
 	podKind                          = "Pod"
