@@ -20,16 +20,15 @@ fullnameOverride: ""
 extraEnvs: []
   # - name: KUBERNETES_SERVICE_HOST
   #   value: 127.0.0.1
+  # - name: XOA_URL
+  #   value: http://xoa-main.cogent1.vates.team
+  # - name: XOA_INSECURE
+  #   value: "true"
+  # - name: XOA_TOKEN
+  #   value: "123ABC"
 
 # -- Any extra arguments for xenorchestra-cloud-controller-manager
-# -- You can also configure Xen-Orchestra values env variables instead of using a config file.
-extraArgs: [
-  # -- Url the Xen Orchestra API
-  "XOA_URL": "http://xoa-main.cogent1.vates.team",
-  "XOA_INSECURE": "true",
-  # -- Token for Xen Orchestra API
-  "XOA_TOKEN": "123ABC",
-]
+extraArgs: []
 # --cluster-name=kubernetes
 
 # -- List of controllers should be enabled.
