@@ -158,8 +158,8 @@ github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1:KO6IkyS8Y3j8OdNO85qEYBsRPuteD+YciPomcXdrMnk=
-github.com/vatesfr/xenorchestra-go-sdk v1.15.1 h1:jBST0y5XC+AtytM8sWJLs7cs2zNsCPanhTpKAzfhj3g=
-github.com/vatesfr/xenorchestra-go-sdk v1.15.1/go.mod h1:fTF8G7F6f6145Ekv1NQI/S9zVRoAmW0xZnFAymU9Pjg=
+github.com/vatesfr/xenorchestra-go-sdk v1.16.0 h1:PyAdRE1vFJZ0JLch+yviFzfNV3M1K/fkOsdSeHZxfSo=
+github.com/vatesfr/xenorchestra-go-sdk v1.16.0/go.mod h1:fTF8G7F6f6145Ekv1NQI/S9zVRoAmW0xZnFAymU9Pjg=
 github.com/vatesfr/xenorchestra-k8s-common v0.2.0 h1:o1wg0pAQs4EkZWtGByUSm38J1diBwxjypGQkScvRHqo=
 github.com/vatesfr/xenorchestra-k8s-common v0.2.0/go.mod h1:o/LRNwZ9LEZlepephpWttXjl0LcRdHHHdP3cinTBvug=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
