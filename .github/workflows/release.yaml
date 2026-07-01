@@ -41,7 +41,7 @@ jobs:
           echo "APP_VERSION=$app_version" >> "$GITHUB_ENV"
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v4.1.1
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Install Helm
         uses: azure/setup-helm@v5
