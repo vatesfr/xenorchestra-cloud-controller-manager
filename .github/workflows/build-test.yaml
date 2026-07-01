@@ -25,7 +25,7 @@ jobs:
 
       - name: Set up go
         timeout-minutes: 5
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: 'go.mod'
 
