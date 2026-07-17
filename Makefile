@@ -112,16 +112,20 @@ docs:
 	yq -i '.appVersion = "$(TAG)"' charts/xenorchestra-cloud-controller-manager/Chart.yaml -y
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		-f charts/xenorchestra-cloud-controller-manager/values.hostnetwork.yaml \
+		--set existingConfigSecret=xenorchestra-cloud-controller-manager \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-hostnetwork.yml
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		-f charts/xenorchestra-cloud-controller-manager/values.edge.yaml \
+		--set existingConfigSecret=xenorchestra-cloud-controller-manager \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-edge.yml
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		--set-string image.tag=$(TAG) \
+		--set existingConfigSecret=xenorchestra-cloud-controller-manager \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager.yml
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		--set-string image.tag=$(TAG) \
 		--set useDaemonSet=true \
+		--set existingConfigSecret=xenorchestra-cloud-controller-manager \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-daemonset.yml
 	helm-docs --sort-values-order=file charts/xenorchestra-cloud-controller-manager
 

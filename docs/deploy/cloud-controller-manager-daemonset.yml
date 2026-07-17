@@ -163,6 +163,7 @@ spec:
           args:
             - --v=2
             - --cloud-provider=xenorchestra
+            - --cloud-config=/etc/xenorchestra/config.yaml
             - --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync
             - --leader-elect-resource-name=cloud-controller-manager-xenorchestra
             - --use-service-account-credentials
@@ -197,6 +198,10 @@ spec:
             requests:
               cpu: 10m
               memory: 32Mi
+          volumeMounts:
+            - name: cloud-config
+              mountPath: /etc/xenorchestra
+              readOnly: true
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -217,3 +222,11 @@ spec:
         - effect: NoSchedule
           key: node.kubernetes.io/not-ready
           operator: Exists
+      volumes:
+        - name: cloud-config
+          secret:
+            secretName: xenorchestra-cloud-controller-manager
+            items:
+              - key: config.yaml
+                path: config.yaml
+            defaultMode: 416

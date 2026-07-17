@@ -58,13 +58,13 @@ Alternatively, you can use a Xen Orchestra username/password pair in `config.yam
 
 ## Deploy CCM
 
+### Method 1: kubectl
+
 Create the Xen Orchestra credentials config file `config.yaml` (see the example above) and store it as a secret:
 
 ```shell
 kubectl -n kube-system create secret generic xenorchestra-cloud-controller-manager --from-file=config.yaml
 ```
-
-### Method 1: kubectl
 
 Deploy the CCM manifest:
 
