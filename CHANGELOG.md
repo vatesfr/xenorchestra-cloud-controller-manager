@@ -1,3 +1,21 @@
+<a name="v1.1.1"></a>
+## [v1.1.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.0...v1.1.1) (2026-07-20)
+
+Welcome to the v1.1.1 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- **chart:** default values now use an existing secret to fix deployment as described in documentation
+
+### Changelog
+
+* 7d2c44c build(deps): bump sigstore/cosign-installer from 4.1.1 to 4.1.2 (#73)
+* a6a3b44 build(deps): bump the k8s-io group with 6 updates (#72)
+* 33e93e2 build(deps): bump actions/checkout from 6 to 6.0.3 (#71)
+* 829b8f9 build(deps): bump actions/setup-go from 6 to 6.4.0 (#70)
+* d81bc70 build(deps): bump golang from 1.26.0-alpine to 1.26.4-alpine (#69)
+* 8de3bd4 build(deps): bump golangci/golangci-lint-action from 9 to 9.2.1 (#68)
+* 7f36659 fix(chart): default values now use an existing secret to fix deployment as described in documentation
 <a name="v1.1.0"></a>
 ## [v1.1.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.0.0...v1.1.0) (2026-06-29)
 
