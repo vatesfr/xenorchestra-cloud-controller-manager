@@ -83,7 +83,7 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 		},
 	}
 
-	changed := updateNodeLabels(client, recorder, testNode, meta)
+	changed := updateNodeLabels(ctx, client, recorder, testNode, meta)
 	assert.False(t, changed, "expected no changes")
 
 	// Node labels should remain unchanged
@@ -101,6 +101,56 @@ func TestUpdateNodeLabels_NoChanges(t *testing.T) {
 	assert.Len(t, evs, 0, "expected no events")
 }
 
+func TestUpdateNodeLabels_SetsMissingProviderID(t *testing.T) {
+	ctx := context.TODO()
+	client := k8sfake.NewClientset()
+	recorder := record.NewFakeRecorder(10)
+	node := testNode.DeepCopy()
+	node.Name = "node-missing-provider-id"
+
+	_, err := client.CoreV1().Nodes().Create(ctx, node, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("failed to seed fake node: %v", err)
+	}
+
+	const providerID = "xenorchestra://pool-id/vm-id"
+	changed := updateNodeLabels(ctx, client, recorder, node, &cloudprovider.InstanceMetadata{
+		ProviderID: providerID,
+	})
+	assert.True(t, changed, "expected the missing providerID to be set")
+
+	got, err := client.CoreV1().Nodes().Get(ctx, node.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get node: %v", err)
+	}
+	assert.Equal(t, providerID, got.Spec.ProviderID)
+}
+
+func TestUpdateNodeLabels_DoesNotOverwriteProviderID(t *testing.T) {
+	ctx := context.TODO()
+	client := k8sfake.NewClientset()
+	recorder := record.NewFakeRecorder(10)
+	node := testNode.DeepCopy()
+	node.Name = "node-existing-provider-id"
+	node.Spec.ProviderID = "other://instance-id"
+
+	_, err := client.CoreV1().Nodes().Create(ctx, node, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("failed to seed fake node: %v", err)
+	}
+
+	changed := updateNodeLabels(ctx, client, recorder, node, &cloudprovider.InstanceMetadata{
+		ProviderID: "xenorchestra://pool-id/vm-id",
+	})
+	assert.False(t, changed, "expected the existing providerID to remain unchanged")
+
+	got, err := client.CoreV1().Nodes().Get(ctx, node.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get node: %v", err)
+	}
+	assert.Equal(t, "other://instance-id", got.Spec.ProviderID)
+}
+
 func TestUpdateNodeLabels_ZoneChanged(t *testing.T) {
 	ctx := context.TODO()
 	client := k8sfake.NewClientset()
@@ -113,7 +163,7 @@ func TestUpdateNodeLabels_ZoneChanged(t *testing.T) {
 
 	meta := &cloudprovider.InstanceMetadata{Zone: "host-2"}
 
-	changed := updateNodeLabels(client, recorder, testNode, meta)
+	changed := updateNodeLabels(ctx, client, recorder, testNode, meta)
 	assert.True(t, changed, "expected changes due to zone update")
 
 	got, err := client.CoreV1().Nodes().Get(ctx, testNode.Name, metav1.GetOptions{})
@@ -146,7 +196,7 @@ func TestUpdateNodeLabels_RegionChanged(t *testing.T) {
 
 	meta := &cloudprovider.InstanceMetadata{Region: "pool-2"}
 
-	changed := updateNodeLabels(client, recorder, testNode, meta)
+	changed := updateNodeLabels(ctx, client, recorder, testNode, meta)
 	assert.True(t, changed, "expected changes due to region update")
 
 	got, err := client.CoreV1().Nodes().Get(ctx, testNode.Name, metav1.GetOptions{})
@@ -178,7 +228,7 @@ func TestUpdateNodeLabels_InstanceTypeChanged(t *testing.T) {
 
 	meta := &cloudprovider.InstanceMetadata{InstanceType: "2vCPU-4GB"}
 
-	changed := updateNodeLabels(client, recorder, testNode, meta)
+	changed := updateNodeLabels(ctx, client, recorder, testNode, meta)
 	assert.True(t, changed, "expected changes due to instance type update")
 
 	got, err := client.CoreV1().Nodes().Get(ctx, testNode.Name, metav1.GetOptions{})
@@ -216,7 +266,7 @@ func TestUpdateNodeLabels_APIFailure(t *testing.T) {
 
 	meta := &cloudprovider.InstanceMetadata{Zone: "host-2"}
 
-	changed := updateNodeLabels(client, recorder, testNode, meta)
+	changed := updateNodeLabels(ctx, client, recorder, testNode, meta)
 	assert.False(t, changed, "expected failure to return false")
 
 	got, err := client.CoreV1().Nodes().Get(ctx, testNode.Name, metav1.GetOptions{})

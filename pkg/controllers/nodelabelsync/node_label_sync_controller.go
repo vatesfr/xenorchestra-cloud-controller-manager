@@ -175,7 +175,7 @@ func (c *Controller) UpdateNodeLabels(ctx context.Context) error {
 			klog.Errorf("Error getting instance metadata for node label sync: %v", err)
 			return
 		}
-		updateNodeLabels(c.kubeClient, c.recorder, node, instanceMetadata)
+		updateNodeLabels(ctx, c.kubeClient, c.recorder, node, instanceMetadata)
 	}
 
 	workqueue.ParallelizeUntil(ctx, int(c.workerCount), len(nodes), updateNodeFunc)

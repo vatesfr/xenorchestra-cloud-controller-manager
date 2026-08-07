@@ -16,13 +16,16 @@ limitations under the License.
 package nodelabelsync
 
 import (
+	"context"
 	"strings"
 
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
+	clientretry "k8s.io/client-go/util/retry"
 	cloudprovider "k8s.io/cloud-provider"
 	cloudproviderapi "k8s.io/cloud-provider/api"
 	cloudnodeutil "k8s.io/cloud-provider/node/helpers"
@@ -89,12 +92,18 @@ func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceM
 	return labelsToUpdate
 }
 
-func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecorder, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) bool {
+func updateNodeLabels(ctx context.Context, kubeClient clientset.Interface, recorder record.EventRecorder, node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) bool {
+	providerIDUpdated, err := updateNodeProviderID(ctx, kubeClient, node, instanceMetadata.ProviderID)
+	if err != nil {
+		klog.ErrorS(err, "error updating providerID for the node", "node", klog.KRef("", node.Name))
+		return false
+	}
+
 	labelsToUpdate := getNodeLabelUpdate(node, instanceMetadata)
 
 	if len(labelsToUpdate) == 0 {
 		klog.V(5).Infof("Skipping label update for node %q since there are no changes", node.Name)
-		return false
+		return providerIDUpdated
 	}
 
 	if !cloudnodeutil.AddOrUpdateLabelsOnNode(kubeClient, labelsToUpdate, node) {
@@ -134,6 +143,42 @@ func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecor
 
 	}
 	return true
+}
+
+// updateNodeProviderID repairs nodes that were initialized by the cloud-node
+// controller without persisting the providerID. An existing providerID is never
+// overwritten, as it may belong to another cloud provider.
+func updateNodeProviderID(ctx context.Context, kubeClient clientset.Interface, node *v1.Node, providerID string) (bool, error) {
+	if node.Spec.ProviderID != "" || providerID == "" {
+		return false, nil
+	}
+
+	updated := false
+	err := clientretry.RetryOnConflict(clientretry.DefaultRetry, func() error {
+		currentNode, err := kubeClient.CoreV1().Nodes().Get(ctx, node.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if currentNode.Spec.ProviderID != "" {
+			return nil
+		}
+
+		currentNode.Spec.ProviderID = providerID
+		if _, err = kubeClient.CoreV1().Nodes().Update(ctx, currentNode, metav1.UpdateOptions{}); err != nil {
+			return err
+		}
+
+		updated = true
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	if updated {
+		klog.InfoS("Set providerID on node from Xen Orchestra metadata", "node", klog.KRef("", node.Name), "providerID", providerID)
+	}
+
+	return updated, nil
 }
 
 func getCloudTaint(taints []v1.Taint) *v1.Taint {
