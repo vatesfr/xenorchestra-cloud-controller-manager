@@ -1,6 +1,6 @@
 # xenorchestra-cloud-controller-manager
 
-![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.1.1](https://img.shields.io/badge/AppVersion-v1.1.1-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.1.1](https://img.shields.io/badge/AppVersion-v1.1.1-informational?style=flat-square)
 
 Cloud Controller Manager plugin for Xen Orchestra
 
@@ -106,6 +106,7 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | existingConfigSecretPath | string | `"config.yaml"` | Xen Orchestra cluster config mount path inside the pod. |
 | config | string | `nil` | Xen Orchestra cluster config. You can provide a necessary configuration for the CCM using a config file. It will be stored in a secret and mounted inside the CCM pod. |
 | serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | Pods Service Account. ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ |
+| rbac | object | `{"create":true}` | RBAC resources creation (ClusterRole and bindings). Disable it when you provision the ClusterRole and ClusterRoleBinding yourself. ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/ |
 | priorityClassName | string | `"system-cluster-critical"` | CCM pods' priorityClassName. |
 | initContainers | list | `[]` | Add additional init containers to the CCM pods. ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
 | hostAliases | list | `[]` | hostAliases Deployment pod host aliases ref: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/ |
