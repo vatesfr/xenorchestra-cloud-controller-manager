@@ -73,6 +73,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# -- RBAC resources creation (ClusterRole and bindings).
+# Disable it when you provision the ClusterRole and ClusterRoleBinding yourself.
+# ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+rbac:
+  # Specifies whether the ClusterRole and ClusterRoleBinding should be created
+  create: true
+
 # -- CCM pods' priorityClassName.
 priorityClassName: system-cluster-critical
 
