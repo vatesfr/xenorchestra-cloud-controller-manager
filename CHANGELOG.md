@@ -1,3 +1,24 @@
+<a name="v1.1.2"></a>
+## [v1.1.2](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.1...v1.1.2) (2026-08-28)
+
+Welcome to the v1.1.2 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+
+### Features
+
+- **chart:** add rbac.create to disable RBAC creation
+
+### Changelog
+
+* 5091a42 chore(chart): bump appVersion
+* 6fe548f build(deps): bump github.com/vatesfr/xenorchestra-go-sdk
+* 0fc6a93 build(deps): bump actions/setup-go from 6.4.0 to 7.0.0
+* cd1d8e1 build(deps): bump golang from 1.26.4-alpine to 1.26.5-alpine
+* d621bf7 build(deps): bump golangci/golangci-lint-action from 9.2.1 to 9.3.0
+* e4fc0e9 build(deps): bump actions/checkout from 6.0.3 to 7.0.1
+* 3e57452 feat(chart): add rbac.create to disable RBAC creation
+* f67e5c0 chore: removing ct chart linter
+* cd7eb4c chore: update release workflow and handle chart-only releases
 <a name="v1.1.1"></a>
 ## [v1.1.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.0...v1.1.1) (2026-07-20)
 
