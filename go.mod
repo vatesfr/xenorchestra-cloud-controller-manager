@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/jarcoal/httpmock v1.4.1
+	github.com/jarcoal/httpmock v1.4.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.0
 	github.com/vatesfr/xenorchestra-go-sdk v1.19.0
