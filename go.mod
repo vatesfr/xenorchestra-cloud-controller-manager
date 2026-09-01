@@ -1,6 +1,6 @@
 module github.com/vatesfr/xenorchestra-cloud-controller-manager
 
-go 1.26.0
+go 1.26.5
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -8,7 +8,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.0
 	github.com/vatesfr/xenorchestra-go-sdk v1.19.0
-	github.com/vatesfr/xenorchestra-k8s-common v0.2.0
+	github.com/vatesfr/xenorchestra-k8s-common v0.3.0
 	go.uber.org/mock v0.6.0
 	k8s.io/api v0.36.2
 	k8s.io/apimachinery v0.36.2
