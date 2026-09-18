@@ -21,7 +21,19 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+
+	v1 "k8s.io/api/core/v1"
+	cloudproviderapi "k8s.io/cloud-provider/api"
 )
+
+func TestGetCloudProviderTaint(t *testing.T) {
+	nodeTaint := v1.Taint{Key: cloudproviderapi.TaintExternalCloudProvider, Effect: v1.TaintEffectNoSchedule}
+	otherTaint := v1.Taint{Key: "example.com/other", Effect: v1.TaintEffectNoExecute}
+
+	assert.Nil(t, GetCloudProviderTaint(nil))
+	assert.Nil(t, GetCloudProviderTaint([]v1.Taint{otherTaint}))
+	assert.Equal(t, &nodeTaint, GetCloudProviderTaint([]v1.Taint{otherTaint, nodeTaint}))
+}
 
 func TestGetInstanceType(t *testing.T) {
 	tests := []struct {

@@ -23,7 +23,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
-	cloudproviderapi "k8s.io/cloud-provider/api"
 	cloudnodehelpers "k8s.io/cloud-provider/node/helpers"
 )
 
@@ -55,17 +54,6 @@ func outOfServiceTaint() *v1.Taint {
 func hasOutOfServiceTaint(node *v1.Node) bool {
 	for i := range node.Spec.Taints {
 		if node.Spec.Taints[i].Key == v1.TaintNodeOutOfService {
-			return true
-		}
-	}
-	return false
-}
-
-// hasCloudProviderTaint returns true while the node still has the
-// node.cloudprovider.kubernetes.io/uninitialized taint (handled by cloud-node).
-func hasCloudProviderTaint(node *v1.Node) bool {
-	for i := range node.Spec.Taints {
-		if node.Spec.Taints[i].Key == cloudproviderapi.TaintExternalCloudProvider {
 			return true
 		}
 	}

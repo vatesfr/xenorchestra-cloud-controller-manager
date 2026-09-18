@@ -95,11 +95,6 @@ func TestHasOutOfServiceTaint(t *testing.T) {
 	assert.True(t, hasOutOfServiceTaint(testNode(withOutOfServiceTaint)))
 }
 
-func TestHasCloudProviderTaint(t *testing.T) {
-	assert.False(t, hasCloudProviderTaint(testNode()))
-	assert.True(t, hasCloudProviderTaint(testNode(withCloudTaint)))
-}
-
 func TestShouldApplyOutOfServiceTaint(t *testing.T) {
 	now := time.Now()
 	grace := 30 * time.Second

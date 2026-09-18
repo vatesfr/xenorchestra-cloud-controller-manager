@@ -18,13 +18,13 @@ package nodelabelsync
 import (
 	"strings"
 
+	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
-	cloudproviderapi "k8s.io/cloud-provider/api"
 	cloudnodeutil "k8s.io/cloud-provider/node/helpers"
 	"k8s.io/klog/v2"
 )
@@ -33,7 +33,7 @@ import (
 func getNodeLabelUpdate(node *v1.Node, instanceMetadata *cloudprovider.InstanceMetadata) map[string]string {
 	klog.V(5).Infof("NodeLabelSyncController.updateNodeLabels(): sync node %s", node.Name)
 	// Do not process nodes that are still tainted
-	cloudTaint := getCloudTaint(node.Spec.Taints)
+	cloudTaint := xenorchestra.GetCloudProviderTaint(node.Spec.Taints)
 	if cloudTaint != nil {
 		klog.V(5).Infof("This node %s is still tainted. Will not process.", node.Name)
 		return nil
@@ -134,13 +134,4 @@ func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecor
 
 	}
 	return true
-}
-
-func getCloudTaint(taints []v1.Taint) *v1.Taint {
-	for _, taint := range taints {
-		if taint.Key == cloudproviderapi.TaintExternalCloudProvider {
-			return &taint
-		}
-	}
-	return nil
 }

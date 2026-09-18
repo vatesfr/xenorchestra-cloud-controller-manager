@@ -21,6 +21,9 @@ import (
 	"unicode"
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+
+	v1 "k8s.io/api/core/v1"
+	cloudproviderapi "k8s.io/cloud-provider/api"
 )
 
 // getInstanceType returns the instance type for the given VM.
@@ -62,4 +65,18 @@ func sanitizeToLabel(s string) string {
 	}
 
 	return out
+}
+
+// GetCloudProviderTaint returns the
+// node.cloudprovider.kubernetes.io/uninitialized taint if the node still
+// carries it, nil otherwise. Nodes with this taint have not been initialized by
+// the cloud-node controller yet and must be left alone.
+func GetCloudProviderTaint(taints []v1.Taint) *v1.Taint {
+	for i := range taints {
+		if taints[i].Key == cloudproviderapi.TaintExternalCloudProvider {
+			return &taints[i]
+		}
+	}
+
+	return nil
 }

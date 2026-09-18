@@ -164,7 +164,7 @@ func (c *Controller) UpdateNodeLabels(ctx context.Context) error {
 	updateNodeFunc := func(piece int) {
 		node := nodes[piece].DeepCopy()
 		// Do not process nodes that are still tainted, those will be processed by the cloud-node-controller
-		cloudTaint := getCloudTaint(node.Spec.Taints)
+		cloudTaint := xenorchestra.GetCloudProviderTaint(node.Spec.Taints)
 		if cloudTaint != nil {
 			klog.V(5).Infof("This node %s is still tainted. Will not process.", node.Name)
 			return

@@ -191,7 +191,7 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 			continue
 		}
 		// Node not initialized by cloud-node yet: leave it alone.
-		if hasCloudProviderTaint(node) {
+		if xenorchestra.GetCloudProviderTaint(node.Spec.Taints) != nil {
 			continue
 		}
 
