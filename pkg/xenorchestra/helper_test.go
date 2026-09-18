@@ -21,7 +21,25 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+
+	v1 "k8s.io/api/core/v1"
+	cloudproviderapi "k8s.io/cloud-provider/api"
 )
+
+func TestGetCloudProviderTaint(t *testing.T) {
+	nodeTaint := v1.Taint{Key: cloudproviderapi.TaintExternalCloudProvider, Effect: v1.TaintEffectNoSchedule}
+	otherTaint := v1.Taint{Key: "example.com/other", Effect: v1.TaintEffectNoExecute}
+
+	assert.Nil(t, GetCloudProviderTaint(nil))
+	assert.Nil(t, GetCloudProviderTaint([]v1.Taint{otherTaint}))
+	assert.Equal(t, &nodeTaint, GetCloudProviderTaint([]v1.Taint{otherTaint, nodeTaint}))
+}
+
+func TestIsNodeManagedByXO(t *testing.T) {
+	assert.True(t, IsNodeManagedByXO(&v1.Node{Spec: v1.NodeSpec{ProviderID: "xenorchestra://pool-id/vm-id"}}))
+	assert.False(t, IsNodeManagedByXO(&v1.Node{Spec: v1.NodeSpec{ProviderID: "aws:///eu-west-1a/i-123"}}))
+	assert.False(t, IsNodeManagedByXO(&v1.Node{}))
+}
 
 func TestGetInstanceType(t *testing.T) {
 	tests := []struct {

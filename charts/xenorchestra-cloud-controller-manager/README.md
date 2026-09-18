@@ -55,6 +55,7 @@ enabledControllers:
   - cloud-node
   - cloud-node-lifecycle
   - cloud-node-label-sync
+  - cloud-node-out-of-service
 
 # Deploy CCM only on control-plane nodes
 affinity:
@@ -99,7 +100,7 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | fullnameOverride | string | `""` |  |
 | extraEnvs | list | `[]` | Any extra environments for xenorchestra-cloud-controller-manager |
 | extraArgs | list | `[]` | Any extra arguments for xenorchestra-cloud-controller-manager |
-| enabledControllers | list | `["cloud-node","cloud-node-lifecycle","cloud-node-label-sync"]` | List of controllers should be enabled. Use '*' to enable all controllers. Support only `cloud-node,cloud-node-lifecycle,cloud-node-label-sync` controllers. |
+| enabledControllers | list | `["cloud-node","cloud-node-lifecycle","cloud-node-label-sync","cloud-node-out-of-service"]` | List of controllers should be enabled. Use '*' to enable all controllers. Support only `cloud-node,cloud-node-lifecycle,cloud-node-label-sync,cloud-node-out-of-service` controllers. |
 | logVerbosityLevel | int | `2` |  |
 | existingConfigSecret | string | `nil` | Xen Orchestra cluster config stored in secrets. |
 | existingConfigSecretKey | string | `"config.yaml"` | Xen Orchestra cluster config stored in secrets key. |

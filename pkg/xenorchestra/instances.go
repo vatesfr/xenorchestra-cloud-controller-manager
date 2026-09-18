@@ -56,13 +56,7 @@ func newInstances(client *xok8s.XoClient) *instances {
 func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, error) {
 	klog.V(4).InfoS("instances.InstanceExists() called", "node", klog.KRef("", node.Name))
 
-	if node.Spec.ProviderID == "" {
-		klog.V(4).InfoS("instances.InstanceExists() empty providerID, omitting unmanaged node", "node", klog.KObj(node))
-
-		return true, nil
-	}
-
-	if !strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName) {
+	if !IsNodeManagedByXO(node) {
 		klog.V(4).InfoS("instances.InstanceExists() omitting unmanaged node", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
 		return true, nil
@@ -86,13 +80,7 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 func (i *instances) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, error) {
 	klog.V(4).InfoS("instances.InstanceShutdown() called", "node", klog.KRef("", node.Name))
 
-	if node.Spec.ProviderID == "" {
-		klog.V(4).InfoS("instances.InstanceShutdown() empty providerID, omitting unmanaged node", "node", klog.KObj(node))
-
-		return false, nil
-	}
-
-	if !strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName) {
+	if !IsNodeManagedByXO(node) {
 		klog.V(4).InfoS("instances.InstanceShutdown() omitting unmanaged node", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
 
 		return false, nil
