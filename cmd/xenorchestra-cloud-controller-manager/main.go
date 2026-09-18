@@ -34,7 +34,6 @@ import (
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
 	v1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/util/wait"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
