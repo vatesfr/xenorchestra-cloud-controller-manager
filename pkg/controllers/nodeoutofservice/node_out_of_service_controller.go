@@ -49,15 +49,12 @@ const (
 
 // Defaults for the command line flags, bound in main.go.
 const (
-	DefaultEnabled     = true
 	DefaultSyncPeriod  = 10 * time.Second
 	DefaultGracePeriod = 30 * time.Second
 )
 
 // Flags, bound to the command line in main.go.
 var (
-	// Enabled turns the controller on or off.
-	Enabled = DefaultEnabled
 	// SyncPeriod is how often the controller watches all nodes.
 	SyncPeriod = DefaultSyncPeriod
 	// GracePeriod is how long a powered-off VM must stay down while its node is
@@ -104,11 +101,6 @@ func startController(ctx context.Context, initContext app.ControllerInitContext,
 	completedConfig *cloudcontrollerconfig.CompletedConfig,
 	cloud cloudprovider.Interface,
 ) (controller.Interface, bool, error) {
-	if !Enabled {
-		klog.InfoS("cloud-node-out-of-service controller is disabled")
-		return nil, false, nil
-	}
-
 	c, err := NewController(
 		ctx,
 		completedConfig.SharedInformers.Core().V1().Nodes(),

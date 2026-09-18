@@ -33,7 +33,6 @@ import (
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/controllers/nodeoutofservice"
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
@@ -78,10 +77,6 @@ func main() {
 
 	fss := cliflag.NamedFlagSets{}
 	outOfServiceFlags := fss.FlagSet("node-out-of-service")
-	outOfServiceFlags.BoolVar(&nodeoutofservice.Enabled, "node-out-of-service-taint", nodeoutofservice.DefaultEnabled,
-		"Apply the "+v1.TaintNodeOutOfService+" taint to nodes whose Xen Orchestra VM is no longer running, so "+
-			"kube-controller-manager can force-detach their volumes without waiting for the 6 minute "+
-			"maxWaitForUnmountDuration timer (Non-Graceful Node Shutdown).")
 	outOfServiceFlags.DurationVar(&nodeoutofservice.SyncPeriod, "node-out-of-service-sync-period", nodeoutofservice.DefaultSyncPeriod,
 		"How often the node out-of-service taint controller reconciles nodes.")
 	outOfServiceFlags.DurationVar(&nodeoutofservice.GracePeriod, "node-out-of-service-grace-period", nodeoutofservice.DefaultGracePeriod,

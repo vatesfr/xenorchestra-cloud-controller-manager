@@ -64,16 +64,18 @@ filesystem, so the two conditions (VM down *and* node `NotReady`) and the grace
 period are required. See the upstream warning in the Node Shutdowns
 documentation.
 
+## Enabling the controller
+
+There is no dedicated enable flag: the controller runs when it is listed in
+`--controllers` (or when `*` is used). The Helm chart (`enabledControllers`) and
+the `docs/deploy` manifests enable it by default.
+
 ## Flags
 
 | flag | default | description |
 |---|---|---|
-| `--node-out-of-service-taint` | `true` | enable the controller |
 | `--node-out-of-service-sync-period` | `10s` | reconciliation period |
 | `--node-out-of-service-grace-period` | `30s` | how long a powered-off VM must stay down (with a NotReady node) before tainting |
-
-The controller must also be listed in `--controllers` (or use `*`). The Helm
-chart and the `docs/deploy` manifests enable it by default.
 
 ## RBAC
 
