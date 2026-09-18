@@ -35,6 +35,12 @@ func TestGetCloudProviderTaint(t *testing.T) {
 	assert.Equal(t, &nodeTaint, GetCloudProviderTaint([]v1.Taint{otherTaint, nodeTaint}))
 }
 
+func TestIsNodeManagedByXO(t *testing.T) {
+	assert.True(t, IsNodeManagedByXO(&v1.Node{Spec: v1.NodeSpec{ProviderID: "xenorchestra://pool-id/vm-id"}}))
+	assert.False(t, IsNodeManagedByXO(&v1.Node{Spec: v1.NodeSpec{ProviderID: "aws:///eu-west-1a/i-123"}}))
+	assert.False(t, IsNodeManagedByXO(&v1.Node{}))
+}
+
 func TestGetInstanceType(t *testing.T) {
 	tests := []struct {
 		name     string

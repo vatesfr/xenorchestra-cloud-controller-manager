@@ -53,14 +53,6 @@ func noCondition(n *v1.Node) {
 	n.Status.Conditions = nil
 }
 
-func noProviderID(n *v1.Node) {
-	n.Spec.ProviderID = ""
-}
-
-func otherProviderID(n *v1.Node) {
-	n.Spec.ProviderID = "aws:///eu-west-1a/i-123"
-}
-
 func withCloudTaint(n *v1.Node) {
 	n.Spec.Taints = append(n.Spec.Taints, v1.Taint{
 		Key: cloudproviderapi.TaintExternalCloudProvider, Effect: v1.TaintEffectNoSchedule,
@@ -84,12 +76,6 @@ func TestIsNodeReady(t *testing.T) {
 	assert.False(t, isNodeReady(testNode(noCondition)))
 }
 
-func TestIsManagedNode(t *testing.T) {
-	assert.True(t, isManagedNode(testNode()))
-	assert.False(t, isManagedNode(testNode(noProviderID)))
-	assert.False(t, isManagedNode(testNode(otherProviderID)))
-}
-
 func TestHasOutOfServiceTaint(t *testing.T) {
 	assert.False(t, hasOutOfServiceTaint(testNode()))
 	assert.True(t, hasOutOfServiceTaint(testNode(withOutOfServiceTaint)))
@@ -110,7 +96,6 @@ func TestShouldApplyOutOfServiceTaint(t *testing.T) {
 		observed time.Time
 		expected bool
 	}{
-		{"unmanaged node", testNode(noProviderID), true, false, false, old, false},
 		{"already tainted", testNode(withOutOfServiceTaint), true, true, false, old, false},
 		{"instance running", testNode(notReady), false, true, false, time.Time{}, false},
 		{"instance down but node ready", testNode(), true, true, true, old, false},

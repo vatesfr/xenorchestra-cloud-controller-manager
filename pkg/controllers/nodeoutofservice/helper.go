@@ -16,10 +16,7 @@ limitations under the License.
 package nodeoutofservice
 
 import (
-	"strings"
 	"time"
-
-	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
@@ -70,11 +67,6 @@ func isNodeReady(node *v1.Node) bool {
 	return false
 }
 
-// isManagedNode reports whether the node is managed by this cloud provider.
-func isManagedNode(node *v1.Node) bool {
-	return node.Spec.ProviderID != "" && strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName)
-}
-
 // shouldApplyOutOfServiceTaint decides whether the out-of-service taint must be
 // added to the node.
 //
@@ -89,10 +81,10 @@ func isManagedNode(node *v1.Node) bool {
 // period before tainting it (a clean reboot must not trigger a force detach).
 // This follows the upstream warning that only a node which is really out of
 // service must be tainted.
+//
+// The caller must have filtered out the nodes that are not managed by this
+// cloud provider.
 func shouldApplyOutOfServiceTaint(node *v1.Node, instanceDown, instanceExists, nodeReady bool, firstObserved, now time.Time, grace time.Duration) bool {
-	if !isManagedNode(node) {
-		return false
-	}
 	if hasOutOfServiceTaint(node) {
 		return false
 	}
@@ -108,7 +100,7 @@ func shouldApplyOutOfServiceTaint(node *v1.Node, instanceDown, instanceExists, n
 // shouldRemoveOutOfServiceTaint decides whether the taint must be removed, so a
 // node whose VM came back and whose kubelet reports Ready can be reused.
 func shouldRemoveOutOfServiceTaint(node *v1.Node, instanceRunning, nodeReady bool) bool {
-	return isManagedNode(node) && hasOutOfServiceTaint(node) && instanceRunning && nodeReady
+	return hasOutOfServiceTaint(node) && instanceRunning && nodeReady
 }
 
 // addOutOfServiceTaint patches the node through the API (idempotent).

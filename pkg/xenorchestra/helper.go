@@ -21,6 +21,7 @@ import (
 	"unicode"
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	cloudproviderapi "k8s.io/cloud-provider/api"
@@ -79,4 +80,11 @@ func GetCloudProviderTaint(taints []v1.Taint) *v1.Taint {
 	}
 
 	return nil
+}
+
+// IsNodeManagedByXO reports whether the node is managed by this cloud provider,
+// i.e. it carries a providerID with the Xen Orchestra prefix. Nodes without a
+// providerID, or with another provider's providerID, must be ignored.
+func IsNodeManagedByXO(node *v1.Node) bool {
+	return node.Spec.ProviderID != "" && strings.HasPrefix(node.Spec.ProviderID, xok8s.ProviderName)
 }

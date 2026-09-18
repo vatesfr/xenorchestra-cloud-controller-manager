@@ -189,7 +189,7 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 	for _, item := range nodes {
 		node := item.DeepCopy()
 
-		if !isManagedNode(node) {
+		if !xenorchestra.IsNodeManagedByXO(node) {
 			continue
 		}
 		// Node not initialized by cloud-node yet: leave it alone.
