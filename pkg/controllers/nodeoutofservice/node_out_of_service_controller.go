@@ -74,7 +74,6 @@ var (
 // the CCM already owns the cloud instance state and this is the earliest
 // reliable signal that the node will never shut down cleanly.
 type Controller struct {
-	nodeInformer     coreinformers.NodeInformer
 	eventBroadcaster record.EventBroadcaster
 	recorder         record.EventRecorder
 	kubeClient       clientset.Interface
@@ -82,7 +81,6 @@ type Controller struct {
 	nodesLister        corelisters.NodeLister
 	nodeInformerSynced cache.InformerSynced
 
-	cloud       cloudprovider.Interface
 	i           xenorchestra.XOInstances
 	gracePeriod time.Duration
 
@@ -135,11 +133,9 @@ func NewController(
 	eventBroadcaster := record.NewBroadcaster(record.WithContext(ctx))
 
 	return &Controller{
-		nodeInformer:       nodeInformer,
 		kubeClient:         kubeClient,
 		eventBroadcaster:   eventBroadcaster,
 		recorder:           eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: ControllerName}),
-		cloud:              cloud,
 		nodesLister:        nodeInformer.Lister(),
 		nodeInformerSynced: nodeInformer.Informer().HasSynced,
 		i:                  instances.(xenorchestra.XOInstances),
