@@ -17,9 +17,11 @@ package nodeoutofservice
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -207,22 +209,22 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 			continue
 		}
 
-		exists, err := c.i.InstanceExists(ctx, node)
-		if err != nil {
-			klog.ErrorS(err, "Failed to check whether the instance exists", "node", klog.KObj(node))
+		vm, err := c.i.GetInstance(ctx, node)
+		instanceMissing := errors.Is(err, cloudprovider.InstanceNotFound)
+		if err != nil && !instanceMissing {
+			klog.ErrorS(err, "Failed to get the instance", "node", klog.KObj(node))
 			continue
 		}
-		shutdown := false
-		if exists {
-			shutdown, err = c.i.InstanceShutdown(ctx, node)
-			if err != nil {
-				klog.ErrorS(err, "Failed to check whether the instance is shutdown", "node", klog.KObj(node))
-				continue
-			}
-		}
 
-		instanceDown := !exists || shutdown
-		instanceRunning := exists && !shutdown
+		// PowerState is Halted, Paused or Suspended when the VM is not running;
+		// a deleted VM has no state at all.
+		instanceState := "deleted"
+		instanceRunning := false
+		if !instanceMissing {
+			instanceState = vm.PowerState
+			instanceRunning = vm.PowerState == payloads.PowerStateRunning
+		}
+		instanceDown := !instanceRunning
 
 		if instanceDown && !nodeReady {
 			if _, seen := c.firstObserved[key]; !seen {
@@ -233,16 +235,16 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 		}
 
 		switch {
-		case shouldApplyOutOfServiceTaint(node, instanceDown, exists, nodeReady, c.firstObserved[key], now, c.gracePeriod):
+		case shouldApplyOutOfServiceTaint(node, instanceDown, !instanceMissing, nodeReady, c.firstObserved[key], now, c.gracePeriod):
 			klog.InfoS("Applying out-of-service taint: VM is not running and node is not Ready",
-				"node", klog.KObj(node), "instanceExists", exists, "instanceShutdown", shutdown)
+				"node", klog.KObj(node), "instanceState", instanceState)
 			if err := addOutOfServiceTaint(c.kubeClient, node); err != nil {
 				klog.ErrorS(err, "Failed to apply out-of-service taint", "node", klog.KObj(node))
 				continue
 			}
 			c.recorder.Eventf(node, v1.EventTypeWarning, "ApplyingOutOfServiceTaint",
-				"VM is not running and the node is not Ready: applying %s=%s:%s so volumes can detach",
-				v1.TaintNodeOutOfService, OutOfServiceTaintValue, v1.TaintEffectNoExecute)
+				"VM state is %q and the node is not Ready: applying %s=%s:%s so volumes can detach",
+				instanceState, v1.TaintNodeOutOfService, OutOfServiceTaintValue, v1.TaintEffectNoExecute)
 
 		case shouldRemoveOutOfServiceTaint(node, instanceRunning, nodeReady):
 			klog.InfoS("Removing out-of-service taint: VM is running again and node is Ready", "node", klog.KObj(node))

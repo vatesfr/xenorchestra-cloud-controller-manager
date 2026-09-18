@@ -36,29 +36,30 @@ import (
 
 // fakeInstances implements xenorchestra.XOInstances for tests.
 type fakeInstances struct {
-	exists   bool
-	shutdown bool
-	err      error
+	vm  *payloads.VM
+	err error
 }
 
 func (f *fakeInstances) GetInstance(context.Context, *v1.Node) (*payloads.VM, error) {
-	return nil, nil
+	return f.vm, f.err
 }
 
 func (f *fakeInstances) InstanceExists(context.Context, *v1.Node) (bool, error) {
-	return f.exists, f.err
+	return f.vm != nil, f.err
 }
 
 func (f *fakeInstances) InstanceShutdown(context.Context, *v1.Node) (bool, error) {
-	return f.shutdown, f.err
+	return f.vm != nil && f.vm.PowerState != payloads.PowerStateRunning, f.err
 }
 
 func (f *fakeInstances) InstanceMetadata(context.Context, *v1.Node) (*cloudprovider.InstanceMetadata, error) {
 	return &cloudprovider.InstanceMetadata{}, nil
 }
 
-// unused context import guard
-var _ = context.Background
+// vmWithState returns a fakeInstances whose VM reports the given power state.
+func vmWithState(state string) *fakeInstances {
+	return &fakeInstances{vm: &payloads.VM{PowerState: state}}
+}
 
 func newTestController(t *testing.T, node *v1.Node, inst *fakeInstances, grace time.Duration) (*Controller, *fake.Clientset) {
 	t.Helper()
@@ -87,7 +88,16 @@ func getNode(t *testing.T, client *fake.Clientset, name string) *v1.Node {
 func TestSyncNodesAppliesTaintOnShutdownNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady)
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: true}, 0)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateHalted), 0)
+
+	require.NoError(t, c.SyncNodes(ctx))
+	assert.True(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
+}
+
+func TestSyncNodesAppliesTaintOnSuspendedNode(t *testing.T) {
+	ctx := context.Background()
+	node := testNode(notReady)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateSuspended), 0)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.True(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
@@ -97,7 +107,7 @@ func TestSyncNodesAppliesTaintWhenInstanceIsMissing(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady)
 	// A missing VM can never come back: no grace period is required.
-	c, client := newTestController(t, node, &fakeInstances{exists: false}, time.Hour)
+	c, client := newTestController(t, node, &fakeInstances{err: cloudprovider.InstanceNotFound}, time.Hour)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.True(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
@@ -106,7 +116,7 @@ func TestSyncNodesAppliesTaintWhenInstanceIsMissing(t *testing.T) {
 func TestSyncNodesDoesNotTaintRunningNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady)
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: false}, 0)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateRunning), 0)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
@@ -115,7 +125,7 @@ func TestSyncNodesDoesNotTaintRunningNode(t *testing.T) {
 func TestSyncNodesDoesNotTaintReadyNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode() // Ready
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: true}, 0)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateHalted), 0)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
@@ -124,7 +134,7 @@ func TestSyncNodesDoesNotTaintReadyNode(t *testing.T) {
 func TestSyncNodesRespectsGracePeriod(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady)
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: true}, time.Minute)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateHalted), time.Minute)
 
 	// First pass only records when the condition was first seen.
 	require.NoError(t, c.SyncNodes(ctx))
@@ -139,7 +149,7 @@ func TestSyncNodesRespectsGracePeriod(t *testing.T) {
 func TestSyncNodesRemovesTaintWhenBackToNormal(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(withOutOfServiceTaint) // Ready
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: false}, 0)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateRunning), 0)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
@@ -148,7 +158,7 @@ func TestSyncNodesRemovesTaintWhenBackToNormal(t *testing.T) {
 func TestSyncNodesSkipsUninitializedNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady, withCloudTaint)
-	c, client := newTestController(t, node, &fakeInstances{exists: true, shutdown: true}, 0)
+	c, client := newTestController(t, node, vmWithState(payloads.PowerStateHalted), 0)
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
