@@ -155,6 +155,19 @@ func TestSyncNodesRemovesTaintWhenBackToNormal(t *testing.T) {
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
 }
 
+func TestSyncNodesForgetsRemovedNodes(t *testing.T) {
+	ctx := context.Background()
+	node := testNode(notReady)
+	// Long grace period: the node is still present, so its timer is kept.
+	c, _ := newTestController(t, node, vmWithState(payloads.PowerStateHalted), time.Hour)
+	c.firstObserved["uid-of-a-deleted-node"] = time.Now()
+
+	require.NoError(t, c.SyncNodes(ctx))
+
+	assert.NotContains(t, c.firstObserved, "uid-of-a-deleted-node")
+	assert.Contains(t, c.firstObserved, string(node.UID))
+}
+
 func TestSyncNodesSkipsUninitializedNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode(notReady, withCloudTaint)

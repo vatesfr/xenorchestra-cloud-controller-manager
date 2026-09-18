@@ -186,18 +186,22 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 	}
 
 	now := time.Now()
+	present := make(map[string]struct{}, len(nodes))
 	for _, item := range nodes {
 		node := item.DeepCopy()
 
 		if !xenorchestra.IsNodeManagedByXO(node) {
 			continue
 		}
+
+		key := string(node.UID)
+		present[key] = struct{}{}
+
 		// Node not initialized by cloud-node yet: leave it alone.
 		if xenorchestra.GetCloudProviderTaint(node.Spec.Taints) != nil {
 			continue
 		}
 
-		key := string(node.UID)
 		nodeReady := isNodeReady(node)
 
 		// Fast path: a Ready node without the taint needs no Xen Orchestra
@@ -254,6 +258,14 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 			}
 			c.recorder.Eventf(node, v1.EventTypeNormal, "RemovingOutOfServiceTaint",
 				"VM is running again and the node is Ready: removing %s", v1.TaintNodeOutOfService)
+		}
+	}
+
+	// Forget the grace-period timers of the nodes that no longer exist, so the
+	// map does not grow with the node churn.
+	for key := range c.firstObserved {
+		if _, ok := present[key]; !ok {
+			delete(c.firstObserved, key)
 		}
 	}
 
