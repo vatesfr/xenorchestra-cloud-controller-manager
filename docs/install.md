@@ -1,9 +1,10 @@
 # Install
 
-The Xen Orchestra Cloud Controller Manager (CCM) ships three controllers:
+The Xen Orchestra Cloud Controller Manager (CCM) ships four controllers:
 * cloud-node — registers nodes, sets `providerID`, and applies Xen Orchestra labels and taints.
 * cloud-node-lifecycle — removes Kubernetes nodes when their VM is deleted in Xen Orchestra.
 * cloud-node-label-sync — periodically reconciles Xen Orchestra metadata back to Kubernetes nodes and preserves the original pool/host labels.
+* cloud-node-out-of-service — applies the `node.kubernetes.io/out-of-service` taint to nodes whose Xen Orchestra VM is no longer running, so volumes detach immediately instead of waiting for the 6 minute `maxWaitForUnmountDuration` timer. See [node-out-of-service.md](node-out-of-service.md).
 
 ## Requirements
 
@@ -92,7 +93,7 @@ logVerbosityLevel: 5
 ...
 ```
 
-You can also point the chart at an existing secret by setting `existingConfigSecret` and `existingConfigSecretKey`. All controllers (`cloud-node`, `cloud-node-lifecycle`, `cloud-node-label-sync`) are enabled by default; override `enabledControllers` to limit what runs.
+You can also point the chart at an existing secret by setting `existingConfigSecret` and `existingConfigSecretKey`. All controllers (`cloud-node`, `cloud-node-lifecycle`, `cloud-node-label-sync`, `cloud-node-out-of-service`) are enabled by default; override `enabledControllers` to limit what runs.
 
 Deploy Xen Orchestra CCM
 

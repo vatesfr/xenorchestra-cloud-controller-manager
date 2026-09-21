@@ -165,7 +165,7 @@ spec:
             - --v=4
             - --cloud-provider=xenorchestra
             - --cloud-config=/etc/xenorchestra/config.yaml
-            - --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync
+            - --controllers=cloud-node,cloud-node-lifecycle,cloud-node-label-sync,cloud-node-out-of-service
             - --leader-elect-resource-name=cloud-controller-manager-xenorchestra
             - --use-service-account-credentials
             - --secure-port=10258

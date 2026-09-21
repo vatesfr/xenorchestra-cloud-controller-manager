@@ -11,6 +11,7 @@ The CCM maps Kubernetes topology labels to Xen Orchestra objects:
 * cloud-node — registers nodes, sets `providerID`, node addresses, taints, and Xen Orchestra labels during initialization.
 * cloud-node-lifecycle — removes Kubernetes nodes when their VM is deleted in Xen Orchestra.
 * cloud-node-label-sync — periodically reconciles Xen Orchestra metadata back to Kubernetes nodes after moves or manual changes, keeping both current and original pool/host labels.
+* cloud-node-out-of-service — applies the `node.kubernetes.io/out-of-service` taint to nodes whose Xen Orchestra VM is no longer running, so kube-controller-manager can force-detach their volumes immediately (Non-Graceful Node Shutdown) instead of waiting for the 6 minute `maxWaitForUnmountDuration` timer. See [docs/node-out-of-service.md](docs/node-out-of-service.md).
 
 ## 🧩 Configuration
 
