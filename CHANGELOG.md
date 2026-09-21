@@ -1,3 +1,27 @@
+<a name="V1.2.0"></a>
+## [V1.2.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.2...V1.2.0) (2026-09-21)
+
+Welcome to the V1.2.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Features
+
+- **chart:** expose node-out-of-service sync and grace period values
+- apply the out-of-service taint when the VM is no longer running
+
+### Changelog
+
+* 84c9e2b feat(chart): expose node-out-of-service sync and grace period values
+* 0d19ddb build(deps): bump github.com/vatesfr/xenorchestra-k8s-common
+* 077e8e1 build(deps): bump the k8s-io group with 6 updates
+* 2cb066a build(deps): bump golang from 1.26.5-alpine to 1.27.0-alpine
+* 2f6e179 refactor(nodeoutofservice): drop unused controller fields
+* 0f354fa fix(nodeoutofservice): prune the grace timers of deleted nodes
+* d169ba6 refactor: share the managed-node check and drop redundant guards
+* 9f96936 refactor(nodeoutofservice): read the VM power state from GetInstance
+* a963ab8 refactor: share the cloud provider taint helper
+* 103999a refactor: drop the redundant node-out-of-service enable flag
+* 3dc8bd2 style: fix gci import grouping in main.go
+* fd93ede feat: apply the out-of-service taint when the VM is no longer running
 <a name="v1.1.2"></a>
 ## [v1.1.2](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.1...v1.1.2) (2026-08-28)
 
