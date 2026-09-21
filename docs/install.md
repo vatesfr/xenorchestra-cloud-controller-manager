@@ -93,7 +93,7 @@ logVerbosityLevel: 5
 ...
 ```
 
-You can also point the chart at an existing secret by setting `existingConfigSecret` and `existingConfigSecretKey`. All controllers (`cloud-node`, `cloud-node-lifecycle`, `cloud-node-label-sync`, `cloud-node-out-of-service`) are enabled by default; override `enabledControllers` to limit what runs.
+You can also point the chart at an existing secret by setting `existingConfigSecret` and `existingConfigSecretKey`. All controllers (`cloud-node`, `cloud-node-lifecycle`, `cloud-node-label-sync`, `cloud-node-out-of-service`) are enabled by default; override `enabledControllers` to limit what runs. The out-of-service taint timing is tuned with `nodeOutOfServiceSyncPeriod` and `nodeOutOfServiceGracePeriod`.
 
 Deploy Xen Orchestra CCM
 

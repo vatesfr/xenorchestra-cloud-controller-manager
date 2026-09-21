@@ -101,7 +101,9 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | extraEnvs | list | `[]` | Any extra environments for xenorchestra-cloud-controller-manager |
 | extraArgs | list | `[]` | Any extra arguments for xenorchestra-cloud-controller-manager |
 | enabledControllers | list | `["cloud-node","cloud-node-lifecycle","cloud-node-label-sync","cloud-node-out-of-service"]` | List of controllers should be enabled. Use '*' to enable all controllers. Support only `cloud-node,cloud-node-lifecycle,cloud-node-label-sync,cloud-node-out-of-service` controllers. |
-| logVerbosityLevel | int | `2` |  |
+| logVerbosityLevel | int | `2` | Log verbosity level. See https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md for description of individual verbosity levels. |
+| nodeOutOfServiceSyncPeriod | string | `""` | How often the node out-of-service taint controller reconciles nodes (e.g. "10s"). Leave empty to use the built-in default (10s). |
+| nodeOutOfServiceGracePeriod | string | `""` | How long a powered-off VM must stay down while its node is NotReady before the out-of-service taint is applied (e.g. "30s"). Leave empty to use the built-in default (30s). A VM deleted from Xen Orchestra is tainted immediately. |
 | existingConfigSecret | string | `nil` | Xen Orchestra cluster config stored in secrets. |
 | existingConfigSecretKey | string | `"config.yaml"` | Xen Orchestra cluster config stored in secrets key. |
 | existingConfigSecretPath | string | `"config.yaml"` | Xen Orchestra cluster config mount path inside the pod. |
