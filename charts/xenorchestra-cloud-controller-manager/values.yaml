@@ -42,9 +42,17 @@ enabledControllers:
   # - route
   # - service
 
-  # -- Log verbosity level. See https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md
-  # for description of individual verbosity levels.
+# -- Log verbosity level. See https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md
+# for description of individual verbosity levels.
 logVerbosityLevel: 2
+
+# -- How often the node out-of-service taint controller reconciles nodes (e.g. "10s").
+# Leave empty to use the built-in default (10s).
+nodeOutOfServiceSyncPeriod: ""
+# -- How long a powered-off VM must stay down while its node is NotReady before the
+# out-of-service taint is applied (e.g. "30s"). Leave empty to use the built-in
+# default (30s). A VM deleted from Xen Orchestra is tainted immediately.
+nodeOutOfServiceGracePeriod: ""
 
 # -- Xen Orchestra cluster config stored in secrets.
 existingConfigSecret: ~

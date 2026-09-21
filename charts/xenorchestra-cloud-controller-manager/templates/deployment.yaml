@@ -73,6 +73,12 @@ spec:
             {{- if and (eq (int .Values.replicaCount) 1) (not .Values.useDaemonSet) }}
             - --leader-elect=false
             {{- end }}
+            {{- if .Values.nodeOutOfServiceSyncPeriod }}
+            - --node-out-of-service-sync-period={{ .Values.nodeOutOfServiceSyncPeriod }}
+            {{- end }}
+            {{- if .Values.nodeOutOfServiceGracePeriod }}
+            - --node-out-of-service-grace-period={{ .Values.nodeOutOfServiceGracePeriod }}
+            {{- end }}
           {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
           {{- end }}

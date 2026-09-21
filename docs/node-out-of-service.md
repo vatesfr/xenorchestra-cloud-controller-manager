@@ -77,6 +77,10 @@ the `docs/deploy` manifests enable it by default.
 | `--node-out-of-service-sync-period` | `10s` | reconciliation period |
 | `--node-out-of-service-grace-period` | `30s` | how long a powered-off VM must stay down (with a NotReady node) before tainting |
 
+With the Helm chart these are set with the `nodeOutOfServiceSyncPeriod` and
+`nodeOutOfServiceGracePeriod` values (empty by default, which keeps the built-in
+defaults).
+
 ## RBAC
 
 The controller only needs `get/list/watch/update/patch` on `nodes`, which the
