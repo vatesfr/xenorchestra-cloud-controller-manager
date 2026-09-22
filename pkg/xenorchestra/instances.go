@@ -159,12 +159,22 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 	instanceType := getInstanceType(vmRef)
 
 	// Get Host info
-	hostRef, err := i.c.Client.Host().Get(ctx, vmRef.Container)
-	if err != nil {
-		klog.ErrorS(err, "instances.InstanceMetadata() failed to get host info", "hostID", vmRef.Container.String())
+	var hostRef *payloads.Host
+	// if the VM is not running, i.e. assigned to an host, the host is set with the poolID,
+	// so we need to check that the host is not the poolID before trying to get the host info
+	if vmRef.Container == vmRef.PoolID {
 		hostRef = &payloads.Host{
 			ID:        vmRef.Container,
 			NameLabel: unknownLabel,
+		}
+	} else {
+		hostRef, err = i.c.Client.Host().Get(ctx, vmRef.Container)
+		if err != nil {
+			klog.ErrorS(err, "instances.InstanceMetadata() failed to get host info", "hostID", vmRef.Container.String())
+			hostRef = &payloads.Host{
+				ID:        uuid.Nil,
+				NameLabel: unknownLabel,
+			}
 		}
 	}
 
@@ -181,16 +191,16 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 	return &cloudprovider.InstanceMetadata{
 		AdditionalLabels: map[string]string{
 			xok8s.XOLabelVmNameLabel:           sanitizeToLabel(vmRef.NameLabel),
-			xok8s.XOLabelTopologyPoolID:        sanitizeToLabel(vmRef.PoolID.String()),
-			xok8s.XOLabelTopologyHostID:        sanitizeToLabel(vmRef.Container.String()),
+			xok8s.XOLabelTopologyPoolID:        sanitizeToLabel(poolRef.ID.String()),
+			xok8s.XOLabelTopologyHostID:        sanitizeToLabel(hostRef.ID.String()),
 			xok8s.XOLabelTopologyHostNameLabel: sanitizeToLabel(hostRef.NameLabel),
 			xok8s.XOLabelTopologyPoolNameLabel: sanitizeToLabel(poolRef.NameLabel),
 		},
 		ProviderID:    providerID,
 		NodeAddresses: addresses,
 		InstanceType:  instanceType,
-		Zone:          vmRef.Container.String(),
-		Region:        vmRef.PoolID.String(),
+		Zone:          hostRef.ID.String(),
+		Region:        poolRef.ID.String(),
 	}, nil
 }
 
