@@ -1,3 +1,16 @@
+<a name="V1.2.1"></a>
+## [V1.2.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.2.0...V1.2.1) (2026-09-24)
+
+Welcome to the V1.2.1 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- host not found error when VM is not running
+
+### Changelog
+
+* 8de68e6 test: fix unit test with host not found
+* c63ce2e fix: host not found error when VM is not running
 <a name="V1.2.0"></a>
 ## [V1.2.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.1.2...V1.2.0) (2026-09-21)
 
