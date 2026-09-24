@@ -45,6 +45,7 @@ const (
 	pool3Node1        = "pool-3-node-1"
 	poolZNode4        = "pool-z-node-4"
 	poolUnknownNode1  = "pool-unknown-node-1"
+	pool1Stopped      = "pool-1-stopped"
 	cluster1Node2     = "cluster-1-node-2"
 	cluster1Node500   = "cluster-1-node-500"
 	sanitizedTestNode = "test-node"
@@ -74,12 +75,13 @@ const (
 	labelXOPoolName = "topology.k8s.xenorchestra/pool_name_label"
 	labelXOVMName   = "vm.k8s.xenorchestra/name_label"
 
-	vmPool1Node1ID  = "550e8400-e29b-41d4-a716-446655440001"
-	vmPool2Node1ID  = "550e8400-e29b-41d4-a716-446655440002"
-	vmPool1Node3ID  = "550e8400-e29b-41d4-a716-446655440003"
-	vmPoolZNode4ID  = "550e8400-e29b-41d4-a716-446655440004"
-	vmMissingID     = "550e8400-e29b-41d4-a716-446655440005"
-	vmAPINotFoundID = "48b8425b-469a-4b4b-860e-635568e5445a"
+	vmPool1Node1ID   = "550e8400-e29b-41d4-a716-446655440001"
+	vmPool2Node1ID   = "550e8400-e29b-41d4-a716-446655440002"
+	vmPool1Node3ID   = "550e8400-e29b-41d4-a716-446655440003"
+	vmPoolZNode4ID   = "550e8400-e29b-41d4-a716-446655440004"
+	vmMissingID      = "550e8400-e29b-41d4-a716-446655440005"
+	vmAPINotFoundID  = "48b8425b-469a-4b4b-860e-635568e5445a"
+	vmPool1StoppedID = "550e8400-e29b-41d4-a716-446655440006"
 
 	pool1ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d"
 	pool2ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d"
@@ -97,6 +99,7 @@ const (
 	providerURIPool1Node3      = xenorchestraProviderScheme + pool1ID + "/" + vmPool1Node3ID
 	providerURIPoolZNode4      = xenorchestraProviderScheme + poolMissingID + "/" + vmPoolZNode4ID
 	providerURIMissingVM       = xenorchestraProviderScheme + pool1ID + "/" + vmMissingID
+	providerURIPool1Stopped    = xenorchestraProviderScheme + pool1ID + "/" + vmPool1StoppedID
 	providerURIWrongPool       = xenorchestraProviderScheme + pool3ID + "/" + vmPool1Node1ID
 	nodeExists                 = "NodeExists"
 	nodeNotExists              = "NodeNotExists"
@@ -175,6 +178,18 @@ func (ts *ccmTestSuite) SetupTest() {
 			CPUs:          payloads.CPUs{Max: 2},
 			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
 			PowerState:    runningState,
+			MainIpAddress: nodeExternalIP4,
+		}, nil).AnyTimes()
+
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmPool1StoppedID))).Return(
+		&payloads.VM{
+			ID:            uuid.Must(uuid.FromString(vmPool1StoppedID)),
+			NameLabel:     pool1Stopped,
+			PoolID:        uuid.Must(uuid.FromString(pool1ID)),
+			Container:     uuid.Must(uuid.FromString(pool1ID)),
+			CPUs:          payloads.CPUs{Max: 2},
+			Memory:        payloads.Memory{Size: 4 * 1024 * 1024 * 1024},
+			PowerState:    haltedState,
 			MainIpAddress: nodeExternalIP4,
 		}, nil).AnyTimes()
 
@@ -535,6 +550,40 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 			},
 		},
 		{
+			msg: "NodeExistsStoppedWithPoolAsContainer",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: pool1Stopped,
+				},
+				Spec: v1.NodeSpec{
+					ProviderID: providerURIPool1Stopped,
+				},
+			},
+			expected: &cloudprovider.InstanceMetadata{
+				ProviderID: providerURIPool1Stopped,
+				NodeAddresses: []v1.NodeAddress{
+					{
+						Type:    v1.NodeExternalIP,
+						Address: nodeExternalIP4,
+					},
+					{
+						Type:    v1.NodeHostName,
+						Address: pool1Stopped,
+					},
+				},
+				InstanceType: instanceType2,
+				Region:       pool1ID,
+				Zone:         pool1ID,
+				AdditionalLabels: map[string]string{
+					labelXOHostID:   pool1ID,
+					labelXOPoolID:   pool1ID,
+					labelXOVMName:   pool1Stopped,
+					labelXOHostName: unknownLabel,
+					labelXOPoolName: testPool1,
+				},
+			},
+		},
+		{
 			msg: "NodeExistsDualstack",
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
@@ -617,9 +666,9 @@ func (ts *ccmTestSuite) TestInstanceMetadata() {
 				},
 				InstanceType: instanceType3,
 				Region:       pool1ID,
-				Zone:         hostMissingID,
+				Zone:         uuid.Nil.String(),
 				AdditionalLabels: map[string]string{
-					labelXOHostID:   hostMissingID,
+					labelXOHostID:   uuid.Nil.String(),
 					labelXOPoolID:   pool1ID,
 					labelXOVMName:   pool1Node3,
 					labelXOHostName: unknownLabel,
