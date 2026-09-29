@@ -59,9 +59,9 @@ const (
 var (
 	// SyncPeriod is how often the controller watches all nodes.
 	SyncPeriod = DefaultSyncPeriod
-	// GracePeriod is how long a powered-off VM must stay down while its node is
-	// NotReady before the out-of-service taint is applied. A missing VM (deleted
-	// from Xen Orchestra) is tainted immediately.
+	// GracePeriod is how long a VM must be down or shutting down while its node
+	// is NotReady before the out-of-service taint is applied. A missing VM
+	// (deleted from Xen Orchestra) is tainted immediately.
 	GracePeriod = DefaultGracePeriod
 )
 
@@ -84,8 +84,9 @@ type Controller struct {
 	i           xenorchestra.XOInstances
 	gracePeriod time.Duration
 
-	// firstObserved records, per node UID, when the "VM down and node NotReady"
-	// condition was first observed. Only touched by the single sync goroutine.
+	// firstObserved records, per node UID, when the "VM down or shutting down
+	// and node NotReady" condition was first observed. Only touched by the
+	// single sync goroutine.
 	firstObserved map[string]time.Time
 }
 
@@ -224,9 +225,9 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 			instanceState = vm.PowerState
 			instanceRunning = vm.PowerState == payloads.PowerStateRunning
 		}
-		instanceDown := !instanceRunning
+		instanceDownOrShuttingDown := !instanceRunning || (!instanceMissing && vm.IsShuttingDown())
 
-		if instanceDown && !nodeReady {
+		if instanceDownOrShuttingDown && !nodeReady {
 			if _, seen := c.firstObserved[key]; !seen {
 				c.firstObserved[key] = now
 			}
@@ -235,8 +236,8 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 		}
 
 		switch {
-		case shouldApplyOutOfServiceTaint(node, instanceDown, !instanceMissing, nodeReady, c.firstObserved[key], now, c.gracePeriod):
-			klog.InfoS("Applying out-of-service taint: VM is not running and node is not Ready",
+		case shouldApplyOutOfServiceTaint(node, instanceDownOrShuttingDown, !instanceMissing, nodeReady, c.firstObserved[key], now, c.gracePeriod):
+			klog.InfoS("Applying out-of-service taint: VM is down or shutting down and node is not Ready",
 				"node", klog.KObj(node), "instanceState", instanceState)
 			if err := addOutOfServiceTaint(c.kubeClient, node); err != nil {
 				klog.ErrorS(err, "Failed to apply out-of-service taint", "node", klog.KObj(node))

@@ -122,6 +122,24 @@ func TestSyncNodesDoesNotTaintRunningNode(t *testing.T) {
 	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
 }
 
+func TestSyncNodesAppliesTaintAfterGraceWhenShutdownOperationIsInProgress(t *testing.T) {
+	ctx := context.Background()
+	node := testNode(notReady)
+	inst := vmWithState(payloads.PowerStateRunning)
+	inst.vm.CurrentOperations = map[string]payloads.VMOperation{
+		"operation-id": payloads.VMOperationSuspend,
+	}
+	c, client := newTestController(t, node, inst, time.Minute)
+
+	require.NoError(t, c.SyncNodes(ctx))
+	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
+	assert.Contains(t, c.firstObserved, string(node.UID))
+
+	c.firstObserved[string(node.UID)] = time.Now().Add(-2 * time.Minute)
+	require.NoError(t, c.SyncNodes(ctx))
+	assert.True(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
+}
+
 func TestSyncNodesDoesNotTaintReadyNode(t *testing.T) {
 	ctx := context.Background()
 	node := testNode() // Ready

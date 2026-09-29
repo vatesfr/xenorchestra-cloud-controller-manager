@@ -7,7 +7,7 @@ require (
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.0
-	github.com/vatesfr/xenorchestra-go-sdk v1.19.0
+	github.com/vatesfr/xenorchestra-go-sdk v1.19.1-0.20261001090358-4aae1b055565
 	github.com/vatesfr/xenorchestra-k8s-common v0.3.0
 	go.uber.org/mock v0.6.0
 	k8s.io/api v0.36.3
