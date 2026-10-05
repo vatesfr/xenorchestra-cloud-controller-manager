@@ -2,7 +2,8 @@
 
 The `cloud-node-out-of-service` controller applies the
 `node.kubernetes.io/out-of-service=nodeshutdown:NoExecute` taint to nodes whose
-Xen Orchestra VM is no longer running. This is the Kubernetes
+Xen Orchestra VM is no longer running, or is currently shutting down
+(suspend, clean or hard shutdown in progress). This is the Kubernetes
 [Non-Graceful Node Shutdown](https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/#non-graceful-node-shutdown)
 procedure, implemented by the CCM because it owns the cloud instance state.
 
@@ -17,6 +18,15 @@ error`, so a simple pod restart takes 8 to 10 minutes.
 
 The 6 minute timer itself is not configurable. The supported way to bypass it is
 the out-of-service taint: KCM then detaches the volume immediately.
+
+The same wait applies to a VM that is being deliberately shut down: a clean
+shutdown or suspend started from Xen Orchestra stops the guest without draining
+the node, but the VM's power state stays `Running` for the whole duration of the
+OS shutdown. The controller therefore also looks at the in-flight XAPI
+operations of the VM and treats a running VM that has a `suspend`,
+`clean-shutdown` or `hard-shutdown` operation in progress as down, so the grace
+period starts as soon as the shutdown begins instead of after the power state
+flips.
 
 ## Who reads the taint
 
@@ -50,19 +60,22 @@ Every `--node-out-of-service-sync-period` (default `10s`) it lists the nodes and
    initialized yet (`node.cloudprovider.kubernetes.io/uninitialized`);
 2. **fast path**: skips Ready nodes that do not carry the taint, so a healthy
    cluster makes no Xen Orchestra API call;
-3. queries Xen Orchestra with `InstancesV2.InstanceExists` and
-   `InstanceShutdown`;
-4. applies the taint when the VM is down **and** the node is `NotReady`:
+3. queries Xen Orchestra with `GetInstance`, which returns the VM's power state
+   and in-flight operations;
+4. applies the taint when the VM is down or shutting down **and** the node is
+   `NotReady`:
    * the VM was deleted from Xen Orchestra → immediate, it can never come back;
-   * the VM is only powered off → only after
-     `--node-out-of-service-grace-period` (default `30s`), because a clean reboot
-     must not trigger a force detach;
+   * the VM is not running (halted, paused or suspended), or a `suspend`,
+     `clean-shutdown` or `hard-shutdown` operation is in progress → only after
+     `--node-out-of-service-grace-period` (default `30s`), because a clean
+     reboot (no operation in flight) must not trigger a force detach;
 5. removes the taint once the VM runs again and the node is `Ready`.
 
 Applying the taint to a node that is not actually shut down can corrupt a
-filesystem, so the two conditions (VM down *and* node `NotReady`) and the grace
-period are required. See the upstream warning in the Node Shutdowns
-documentation.
+filesystem, so the two conditions (VM down or shutting down *and* node
+`NotReady`) and the grace period are required. The grace period also covers a
+shutdown operation that is cancelled before it completes. See the upstream
+warning in the Node Shutdowns documentation.
 
 ## Enabling the controller
 
@@ -75,7 +88,7 @@ the `docs/deploy` manifests enable it by default.
 | flag | default | description |
 |---|---|---|
 | `--node-out-of-service-sync-period` | `10s` | reconciliation period |
-| `--node-out-of-service-grace-period` | `30s` | how long a powered-off VM must stay down (with a NotReady node) before tainting |
+| `--node-out-of-service-grace-period` | `30s` | how long a VM must stay down or have a shutdown operation in progress (with a NotReady node) before tainting |
 
 With the Helm chart these are set with the `nodeOutOfServiceSyncPeriod` and
 `nodeOutOfServiceGracePeriod` values (empty by default, which keeps the built-in
