@@ -16,6 +16,7 @@ limitations under the License.
 package xenorchestra
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -93,4 +94,9 @@ func TestSanitizeToLabel(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestErrPoolUnavailableIsWrapped(t *testing.T) {
+	err := fmt.Errorf("%w: pool p", ErrPoolUnavailable)
+	assert.ErrorIs(t, err, ErrPoolUnavailable)
 }

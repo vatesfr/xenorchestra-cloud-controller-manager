@@ -19,6 +19,7 @@ package xenorchestra
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -28,6 +29,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mock_library "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra/mocks"
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/apierror"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
@@ -82,6 +84,9 @@ const (
 	vmMissingID      = "550e8400-e29b-41d4-a716-446655440005"
 	vmAPINotFoundID  = "48b8425b-469a-4b4b-860e-635568e5445a"
 	vmPool1StoppedID = "550e8400-e29b-41d4-a716-446655440006"
+	vmHTML404ID      = "550e8400-e29b-41d4-a716-446655440007"
+	vmAPIErrorID     = "550e8400-e29b-41d4-a716-446655440008"
+	vmOtherIDBodyID  = "550e8400-e29b-41d4-a716-446655440009"
 
 	pool1ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f1d"
 	pool2ID       = "a3c8f86b-9c2f-4c3d-8a7b-2d44e6f77f2d"
@@ -101,9 +106,29 @@ const (
 	providerURIMissingVM       = xenorchestraProviderScheme + pool1ID + "/" + vmMissingID
 	providerURIPool1Stopped    = xenorchestraProviderScheme + pool1ID + "/" + vmPool1StoppedID
 	providerURIWrongPool       = xenorchestraProviderScheme + pool3ID + "/" + vmPool1Node1ID
+	providerURIPoolMissingVM   = xenorchestraProviderScheme + poolMissingID + "/" + vmMissingID
+	providerURINoPoolMissingVM = xenorchestraProviderScheme + "/" + vmMissingID
+	providerURIHTML404         = xenorchestraProviderScheme + pool1ID + "/" + vmHTML404ID
+	providerURIAPIError        = xenorchestraProviderScheme + pool1ID + "/" + vmAPIErrorID
+	providerURIOtherIDBody     = xenorchestraProviderScheme + pool1ID + "/" + vmOtherIDBodyID
+	apiErrorBody               = "boom"
 	nodeExists                 = "NodeExists"
 	nodeNotExists              = "NodeNotExists"
 )
+
+const xoTestURL = "https://xo.example/rest/v0/"
+
+// xoNoSuchVM returns the SDK error for Xen Orchestra's 404 on GET /vms/<id>.
+func xoNoSuchVM(id string) error {
+	body := fmt.Sprintf(`{"error":"no such VM %[1]s","data":{"id":"%[1]s","type":"VM"}}`, id)
+
+	return apierror.NewFromResponse(http.MethodGet, xoTestURL+"vms/"+id, http.StatusNotFound, "404 Not Found", []byte(body))
+}
+
+// apiError returns the SDK error for any other answer of the REST API.
+func apiError(path string, status int, body string) error {
+	return apierror.NewFromResponse(http.MethodGet, xoTestURL+path, status, "", []byte(body))
+}
 
 type ccmTestSuite struct {
 	suite.Suite
@@ -116,6 +141,7 @@ func (ts *ccmTestSuite) SetupTest() {
 	ts.ctrl = gomock.NewController(ts.T())
 
 	mockVM := mock_library.NewMockVM(ts.ctrl)
+
 	mockVM.EXPECT().GetAll(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*payloads.VM{
 		{
 			ID:        uuid.Must(uuid.FromString(vmPool1Node1ID)),
@@ -193,9 +219,22 @@ func (ts *ccmTestSuite) SetupTest() {
 			MainIpAddress: nodeExternalIP4,
 		}, nil).AnyTimes()
 
-	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(
-		nil,
-		fmt.Errorf("API error: 404 Not Found - {\n\t\"error\": \"no such VM %s\"\n}", vmAPINotFoundID),
+	// A 404 answered by a reverse proxy, not by XO.
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmHTML404ID))).Return(
+		nil, apiError("vms/"+vmHTML404ID, http.StatusNotFound, "<html>default backend - 404</html>")).AnyTimes()
+
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmAPIErrorID))).Return(
+		nil, apiError("vms/"+vmAPIErrorID, http.StatusInternalServerError, apiErrorBody)).AnyTimes()
+
+	// An XO 404 whose data names another object: not an answer about this VM.
+	mockVM.EXPECT().GetByID(gomock.Any(), uuid.Must(uuid.FromString(vmOtherIDBodyID))).Return(
+		nil, xoNoSuchVM(vmAPINotFoundID)).AnyTimes()
+
+	// Any other VM is unknown to XO: the real 404 echoes the requested id.
+	mockVM.EXPECT().GetByID(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, id uuid.UUID) (*payloads.VM, error) {
+			return nil, xoNoSuchVM(id.String())
+		},
 	).AnyTimes()
 
 	// Mock Host service
@@ -214,7 +253,7 @@ func (ts *ccmTestSuite) SetupTest() {
 
 	// Mock Host.Get for a specific UUID that will return an error
 	mockHost.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(hostMissingID)).Return(
-		nil, fmt.Errorf("API error: 404 Not Found - host not found")).AnyTimes()
+		nil, apiError("hosts/"+hostMissingID, http.StatusNotFound, "host not found")).AnyTimes()
 
 	// // Default mock for any other Host.Get call
 	// mockHost.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
@@ -237,7 +276,7 @@ func (ts *ccmTestSuite) SetupTest() {
 		}, nil).AnyTimes()
 
 	mockPool.EXPECT().Get(gomock.Any(), uuid.FromStringOrNil(poolMissingID)).Return(
-		nil, fmt.Errorf("API error: 404 Not Found - pool not found")).AnyTimes()
+		nil, apiError("pools/"+poolMissingID, http.StatusNotFound, "pool not found")).AnyTimes()
 
 	// Mock Library
 	mockLib := mock_library.NewMockLibrary(ts.ctrl)
@@ -262,10 +301,11 @@ func TestSuiteCCM(t *testing.T) {
 // nolint:dupl
 func (ts *ccmTestSuite) TestInstanceExists() {
 	tests := []struct {
-		msg           string
-		node          *v1.Node
-		expectedError string
-		expected      bool
+		msg             string
+		node            *v1.Node
+		expectedError   string
+		expectedErrorIs error
+		expected        bool
 	}{
 		{
 			msg: "EmptyProviderID",
@@ -317,6 +357,52 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 			expected: false,
 		},
 		{
+			// XO answers "no such VM" but does not know the pool: disconnected.
+			msg: "NodePoolUnavailable",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIPoolMissingVM},
+			},
+			expectedError:   "pool " + poolMissingID,
+			expectedErrorIs: ErrPoolUnavailable,
+		},
+		{
+			// Legacy providerID without a pool: the deletion cannot be confirmed.
+			msg: "NodeNoPoolInProviderID",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURINoPoolMissingVM},
+			},
+			expectedError:   "has no pool",
+			expectedErrorIs: ErrPoolUnavailable,
+		},
+		{
+			// A 404 that does not carry XO's error body is not a deletion.
+			msg: "NodeHTML404",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIHTML404},
+			},
+			expectedError: "default backend",
+		},
+		{
+			msg: "NodeAPIError",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIAPIError},
+			},
+			expectedError: apiErrorBody,
+		},
+		{
+			// An XO 404 whose data.id is not the requested VM is not trusted.
+			msg: "NodeXO404OtherID",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIOtherIDBody},
+			},
+			expectedError: vmAPINotFoundID,
+		},
+		{
 			msg: nodeExists,
 			node: &v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
@@ -351,12 +437,31 @@ func (ts *ccmTestSuite) TestInstanceExists() {
 				ts.Require().Error(err)
 				ts.Require().False(exists)
 				ts.Require().Contains(err.Error(), testCase.expectedError)
+
+				if testCase.expectedErrorIs != nil {
+					ts.Require().ErrorIs(err, testCase.expectedErrorIs)
+				} else {
+					ts.Require().NotErrorIs(err, ErrPoolUnavailable)
+				}
 			} else {
 				ts.Require().NoError(err)
 				ts.Require().Equal(testCase.expected, exists)
 			}
 		})
 	}
+}
+
+func (ts *ccmTestSuite) TestGetInstanceKeepsSDKError() {
+	node := &v1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+		Spec:       v1.NodeSpec{ProviderID: providerURIAPIError},
+	}
+
+	_, err := ts.i.GetInstance(context.Background(), node)
+
+	apiErr, ok := apierror.As(err)
+	ts.Require().True(ok, "the SDK error must stay reachable with errors.As, got %T", err)
+	ts.Require().Equal(http.StatusInternalServerError, apiErr.StatusCode)
 }
 
 // nolint:dupl
@@ -403,6 +508,23 @@ func (ts *ccmTestSuite) TestInstanceShutdown() {
 			},
 			expected:      false,
 			expectedError: "vm not found: " + providerURIMissingVM,
+		},
+		{
+			// An API failure is returned, not hidden as "not shut down".
+			msg: "NodeAPIError",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIAPIError},
+			},
+			expectedError: apiErrorBody,
+		},
+		{
+			msg: "NodePoolUnavailable",
+			node: &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: pool1Node500},
+				Spec:       v1.NodeSpec{ProviderID: providerURIPoolMissingVM},
+			},
+			expectedError: "pool " + poolMissingID,
 		},
 		{
 			msg: nodeExists,

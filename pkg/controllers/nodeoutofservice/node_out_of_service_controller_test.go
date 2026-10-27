@@ -17,12 +17,14 @@ package nodeoutofservice
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 
 	v1 "k8s.io/api/core/v1"
@@ -57,7 +59,7 @@ func (f *fakeInstances) InstanceMetadata(context.Context, *v1.Node) (*cloudprovi
 }
 
 // vmWithState returns a fakeInstances whose VM reports the given power state.
-func vmWithState(state string) *fakeInstances {
+func vmWithState(state payloads.PowerState) *fakeInstances {
 	return &fakeInstances{vm: &payloads.VM{PowerState: state}}
 }
 
@@ -111,6 +113,33 @@ func TestSyncNodesAppliesTaintWhenInstanceIsMissing(t *testing.T) {
 
 	require.NoError(t, c.SyncNodes(ctx))
 	assert.True(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
+}
+
+func TestSyncNodesSkipsNodeWhenPoolUnavailable(t *testing.T) {
+	ctx := context.Background()
+	node := testNode(notReady)
+	// Xen Orchestra lost sight of the pool: the VM 404 is not a deletion.
+	inst := &fakeInstances{err: fmt.Errorf("%w: pool pool-id", xenorchestra.ErrPoolUnavailable)}
+	c, client := newTestController(t, node, inst, 0)
+	recorder := record.NewFakeRecorder(10)
+	c.recorder = recorder
+
+	require.NoError(t, c.SyncNodes(ctx))
+	assert.False(t, hasOutOfServiceTaint(getNode(t, client, node.Name)))
+	assert.NotContains(t, c.firstObserved, string(node.UID), "the grace timer must not start")
+	assert.Empty(t, recorder.Events)
+}
+
+func TestSyncNodesKeepsGraceTimerWhenPoolUnavailable(t *testing.T) {
+	ctx := context.Background()
+	node := testNode(notReady)
+	inst := &fakeInstances{err: fmt.Errorf("%w: pool pool-id", xenorchestra.ErrPoolUnavailable)}
+	c, _ := newTestController(t, node, inst, time.Hour)
+	started := time.Now().Add(-time.Minute)
+	c.firstObserved[string(node.UID)] = started
+
+	require.NoError(t, c.SyncNodes(ctx))
+	assert.Equal(t, started, c.firstObserved[string(node.UID)], "the grace timer must not be reset")
 }
 
 func TestSyncNodesDoesNotTaintRunningNode(t *testing.T) {

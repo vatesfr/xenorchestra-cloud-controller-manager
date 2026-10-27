@@ -77,6 +77,10 @@ func isNodeReady(node *v1.Node) bool {
 //	grace          how long the pair must hold before tainting a shutdown VM
 //
 // A VM that no longer exists can never come back, so it is tainted right away.
+// "No longer exists" is a confirmed answer: GetInstance returns
+// InstanceNotFound only when Xen Orchestra's error body says "no such VM" and
+// Xen Orchestra still knows the VM's pool; a pool it lost sight of returns
+// ErrPoolUnavailable and the caller skips the node.
 // A VM that is merely powered off may be rebooting, so we wait for the grace
 // period before tainting it (a clean reboot must not trigger a force detach).
 // This follows the upstream warning that only a node which is really out of

@@ -64,7 +64,11 @@ Every `--node-out-of-service-sync-period` (default `10s`) it lists the nodes and
    and in-flight operations;
 4. applies the taint when the VM is down or shutting down **and** the node is
    `NotReady`:
-   * the VM was deleted from Xen Orchestra → immediate, it can never come back;
+   * the VM was deleted from Xen Orchestra → immediate, it can never come back.
+     The deletion is trusted only when Xen Orchestra's own 404 names the
+     requested VM **and** Xen Orchestra still knows the pool named in the
+     providerID; otherwise the node is skipped and the pool ID is logged (see
+     [When Xen Orchestra loses a pool](#when-xen-orchestra-loses-a-pool));
    * the VM is not running (halted, paused or suspended), or a `suspend`,
      `clean-shutdown` or `hard-shutdown` operation is in progress → only after
      `--node-out-of-service-grace-period` (default `30s`), because a clean
@@ -76,6 +80,43 @@ filesystem, so the two conditions (VM down or shutting down *and* node
 `NotReady`) and the grace period are required. The grace period also covers a
 shutdown operation that is cancelled before it completes. See the upstream
 warning in the Node Shutdowns documentation.
+
+## When Xen Orchestra loses a pool
+
+Xen Orchestra keeps the objects of each connected pool in memory. When it loses
+the connection to a pool, it **removes every object of that pool** and answers
+`404 no such VM` for VMs that are still running. This happens when:
+
+* the pool is disconnected in Xen Orchestra (Settings → Servers);
+* the pool master reboots, or the network between Xen Orchestra and the pool is
+  cut for longer than `xapiMarkDisconnectedDelay`;
+* Xen Orchestra restarts: pools reappear one by one as they reconnect.
+
+A VM that answers 404 is therefore treated as deleted only when both of these
+hold:
+
+1. the 404 is Xen Orchestra's own answer for this VM: its JSON body carries
+   `"data":{"id":"<the requested VM UUID>","type":"VM"}`. A 404 with any other
+   body (a reverse proxy page, a wrong URL, another object's id) is an error;
+2. Xen Orchestra still returns the pool named in the providerID
+   (`xenorchestra://<pool>/<vm>`). A providerID without a pool cannot be
+   confirmed and is never treated as deleted.
+
+When a check fails, nothing is tainted and nothing is deleted: this controller
+skips the node without starting or resetting its grace period, and logs once
+per sync and per pool:
+
+```
+"Xen Orchestra does not know the pool; is the server disconnected? Skipping its nodes" pool="<pool-id>"
+```
+
+The `cloud-node-lifecycle` controller gets an error instead of "VM not found",
+logs it and retries on its next sync. Nodes recover on their own once Xen
+Orchestra reconnects the pool.
+
+A Xen Orchestra version whose 404 body has no `data` field is never trusted:
+its deleted VMs are reported as errors, not as deleted. Remove such nodes with
+`kubectl delete node <name>`.
 
 ## Enabling the controller
 
