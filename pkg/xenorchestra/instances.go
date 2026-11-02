@@ -18,11 +18,13 @@ package xenorchestra
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/gofrs/uuid"
 
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/apierror"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
@@ -63,13 +65,15 @@ func (i *instances) InstanceExists(ctx context.Context, node *v1.Node) (bool, er
 	}
 
 	if _, err := i.GetInstance(ctx, node); err != nil {
-		if err == cloudprovider.InstanceNotFound {
-			klog.V(4).InfoS("instances.InstanceExists() instance not found", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
-
-			return false, nil // Return nil, it's not an error: it's expected when the VM has been deleted
+		// GetInstance returns InstanceNotFound only when XO's 404 names this
+		// VM and XO still knows its pool; anything else is an error.
+		if !errors.Is(err, cloudprovider.InstanceNotFound) {
+			return false, err
 		}
 
-		return false, err
+		klog.V(4).InfoS("instances.InstanceExists() instance not found", "node", klog.KObj(node), "providerID", node.Spec.ProviderID)
+
+		return false, nil // Return nil, it's not an error: it's expected when the VM has been deleted
 	}
 
 	return true, nil
@@ -88,15 +92,15 @@ func (i *instances) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, 
 
 	vmr, err := i.GetInstance(ctx, node)
 	if err != nil {
-		if err == cloudprovider.InstanceNotFound {
+		if errors.Is(err, cloudprovider.InstanceNotFound) {
 			klog.InfoS("instances.InstanceShutdown() instance not found, is it deleted?", "providerID", node.Spec.ProviderID)
 
 			return false, fmt.Errorf("vm not found: %s", node.Spec.ProviderID) // Vm not found, probably deleted
 		}
 
-		klog.ErrorS(err, "instances.InstanceShutdown() failed to parse providerID", "providerID", node.Spec.ProviderID)
+		klog.ErrorS(err, "instances.InstanceShutdown() failed to get the instance", "providerID", node.Spec.ProviderID)
 
-		return false, nil
+		return false, err
 	}
 
 	if vmr.PowerState != payloads.PowerStateRunning {
@@ -217,11 +221,25 @@ func (i *instances) GetInstance(ctx context.Context, node *v1.Node) (*payloads.V
 
 	vm, err := i.c.Client.VM().GetByID(ctx, nodeRef.ID)
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "API error: 404 Not Found") {
-			return nil, cloudprovider.InstanceNotFound
+		// Only Xen Orchestra's own 404 for this VM (data.id echoes the
+		// requested id) can mean "deleted"; a 404 from a reverse proxy or a
+		// wrong URL is an error.
+		if !apierror.IsNoSuchObject(err, payloads.ResourceTypeVM, nodeRef.ID.String()) {
+			return nil, fmt.Errorf("instances.getInstance() error: %w", err)
 		}
 
-		return nil, fmt.Errorf("instances.getInstance() error: %v", err)
+		// XO removes every object of a pool it lost sight of: the VM lookup
+		// only means "deleted" when XO still knows the pool.
+		if poolID.IsNil() {
+			return nil, fmt.Errorf("%w: providerID %s has no pool, cannot confirm that VM %s is deleted",
+				ErrPoolUnavailable, node.Spec.ProviderID, nodeRef.ID)
+		}
+
+		if _, perr := i.c.Client.Pool().Get(ctx, poolID); perr != nil {
+			return nil, fmt.Errorf("%w: pool %s (VM %s not found): %v", ErrPoolUnavailable, poolID, nodeRef.ID, perr)
+		}
+
+		return nil, cloudprovider.InstanceNotFound
 	}
 
 	// Exclude case `vm.NameLabel != node.Name ||`, this should only require a refresh, not an 'node not found' error

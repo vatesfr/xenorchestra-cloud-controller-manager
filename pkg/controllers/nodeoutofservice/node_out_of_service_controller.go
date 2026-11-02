@@ -20,8 +20,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -60,8 +63,9 @@ var (
 	// SyncPeriod is how often the controller watches all nodes.
 	SyncPeriod = DefaultSyncPeriod
 	// GracePeriod is how long a VM must be down or shutting down while its node
-	// is NotReady before the out-of-service taint is applied. A missing VM
-	// (deleted from Xen Orchestra) is tainted immediately.
+	// is NotReady before the out-of-service taint is applied. A confirmed
+	// missing VM (Xen Orchestra answers "no such VM" and still knows its pool)
+	// is tainted immediately.
 	GracePeriod = DefaultGracePeriod
 )
 
@@ -184,6 +188,9 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 
 	now := time.Now()
 	present := make(map[string]struct{}, len(nodes))
+	// Pools already reported as unknown to Xen Orchestra during this sync, so
+	// a disconnected pool is logged once and not once per node.
+	poolsUnavailable := map[uuid.UUID]struct{}{}
 	for _, item := range nodes {
 		node := item.DeepCopy()
 
@@ -213,6 +220,20 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 		vm, err := c.i.GetInstance(ctx, node)
 		instanceMissing := errors.Is(err, cloudprovider.InstanceNotFound)
 		if err != nil && !instanceMissing {
+			// Xen Orchestra lost sight of the pool: its VMs answer 404 but are
+			// not deleted. Skip the node without touching its grace timer.
+			if errors.Is(err, xenorchestra.ErrPoolUnavailable) {
+				_, poolID, _ := xok8s.ParseProviderID(node.Spec.ProviderID)
+				if _, logged := poolsUnavailable[poolID]; !logged {
+					// Log an error only once per pool per sync.
+					poolsUnavailable[poolID] = struct{}{}
+					klog.ErrorS(err, "Xen Orchestra does not know the pool; is the server disconnected? Skipping its nodes", "pool", poolID.String())
+				}
+				// Log a debug message for each node of the pool.
+				klog.V(4).InfoS("Skipping node: its pool is unknown to Xen Orchestra", "node", klog.KObj(node), "pool", poolID.String())
+				continue
+			}
+
 			klog.ErrorS(err, "Failed to get the instance", "node", klog.KObj(node))
 			continue
 		}
@@ -222,7 +243,7 @@ func (c *Controller) SyncNodes(ctx context.Context) error {
 		instanceState := "deleted"
 		instanceRunning := false
 		if !instanceMissing {
-			instanceState = vm.PowerState
+			instanceState = string(vm.PowerState)
 			instanceRunning = vm.PowerState == payloads.PowerStateRunning
 		}
 		instanceDownOrShuttingDown := !instanceRunning || (!instanceMissing && vm.IsShuttingDown())

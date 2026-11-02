@@ -16,6 +16,7 @@ limitations under the License.
 package xenorchestra
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode"
@@ -26,6 +27,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 	cloudproviderapi "k8s.io/cloud-provider/api"
 )
+
+// ErrPoolUnavailable is returned (wrapped) by GetInstance when Xen Orchestra
+// answers "no such VM" but does not know the VM's pool either. Xen Orchestra
+// removes every object of a pool it is disconnected from (pool master reboot,
+// network partition, XO restart), so the VM lookup proves nothing: the caller
+// must retry later and never treat the VM as deleted.
+var ErrPoolUnavailable = errors.New("pool unknown to Xen Orchestra")
 
 // getInstanceType returns the instance type for the given VM.
 // It returns the instance type name if it matches the expected format, otherwise it returns a formatted string

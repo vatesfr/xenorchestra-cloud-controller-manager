@@ -105,6 +105,15 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yml \
 
 More options you can find [here](../charts/xenorchestra-cloud-controller-manager/README.md#values)
 
+### Reverse proxy in front of Xen Orchestra
+
+If Xen Orchestra is behind a reverse proxy or an ingress, make it answer
+`502`/`503` when Xen Orchestra is down, **never `404`**. The CCM treats a `404`
+as "VM deleted" only when the body is Xen Orchestra's own error naming the
+requested VM and Xen Orchestra still knows the pool, so a proxy 404 no longer deletes nodes, but
+it hides the real cause in the logs. See
+[When Xen Orchestra loses a pool](node-out-of-service.md#when-xen-orchestra-loses-a-pool).
+
 ## Troubleshooting
 
 Read the [Kubernetes documentation for Cloud Controller Manager Administration](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/).
