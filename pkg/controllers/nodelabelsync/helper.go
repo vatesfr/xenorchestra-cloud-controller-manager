@@ -102,7 +102,7 @@ func updateNodeLabels(kubeClient clientset.Interface, recorder record.EventRecor
 		return false
 	}
 
-	klog.V(4).InfoS("Updated labels for node %q", "node", node.Name, "labelsToUpdate", labelsToUpdate)
+	klog.V(4).InfoS("Updated labels for node", "node", klog.KObj(node), "labelsToUpdate", labelsToUpdate)
 
 	eventRef := &v1.ObjectReference{
 		APIVersion: "v1",

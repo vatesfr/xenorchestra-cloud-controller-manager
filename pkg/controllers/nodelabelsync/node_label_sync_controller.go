@@ -89,11 +89,11 @@ func startNodeLabelSyncController(ctx context.Context, initContext app.Controlle
 		return nil, false, nil
 	}
 
-	klog.InfoS("Starting cloud-node-label-sync controller", "controller", ControllerName)
-	go nodeController.Run(ctx, completedConfig.ComponentConfig.KubeCloudShared.RouteReconciliationPeriod.Duration)
+	klog.InfoS("Starting cloud-node-label-sync controller",
+		"controller", ControllerName, "syncPeriod", nodeController.nodeStatusUpdateFrequency.String())
+	go nodeController.Run(ctx)
 
-	return nil, true, nil
-	// return controller, true, nil
+	return nodeController, true, nil
 }
 
 func NewNodeLabelSyncController(
@@ -122,7 +122,7 @@ func NewNodeLabelSyncController(
 	}, nil
 }
 
-func (c *Controller) Run(ctx context.Context, interval time.Duration) {
+func (c *Controller) Run(ctx context.Context) {
 	stopCh := ctx.Done()
 
 	defer utilruntime.HandleCrash()
@@ -163,6 +163,10 @@ func (c *Controller) UpdateNodeLabels(ctx context.Context) error {
 
 	updateNodeFunc := func(piece int) {
 		node := nodes[piece].DeepCopy()
+		if !xenorchestra.IsNodeManagedByXO(node) {
+			return
+		}
+
 		// Do not process nodes that are still tainted, those will be processed by the cloud-node-controller
 		cloudTaint := xenorchestra.GetCloudProviderTaint(node.Spec.Taints)
 		if cloudTaint != nil {

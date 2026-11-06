@@ -122,7 +122,7 @@ func startController(ctx context.Context, initContext app.ControllerInitContext,
 		"controller", ControllerName, "syncPeriod", SyncPeriod.String(), "gracePeriod", GracePeriod.String())
 	go c.Run(ctx)
 
-	return nil, true, nil
+	return c, true, nil
 }
 
 // NewController builds the controller.
