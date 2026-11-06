@@ -18,16 +18,23 @@ package xenorchestra
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
+	mock_library "github.com/vatesfr/xenorchestra-cloud-controller-manager/pkg/xenorchestra/mocks"
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 	xok8s "github.com/vatesfr/xenorchestra-k8s-common"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	cloudprovider "k8s.io/cloud-provider"
 )
 
 func TestNewCloudError(t *testing.T) {
@@ -81,10 +88,10 @@ token: "12ABC"
 	assert.Equal(t, clID, true)
 }
 
-func TestRecordCloudProviderInitializationFailure(t *testing.T) {
+func TestRecordCloudProviderEvent(t *testing.T) {
 	client := fake.NewClientset()
 
-	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	err := recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
 	assert.NoError(t, err)
 
 	events, err := client.EventsV1().Events(metav1.NamespaceSystem).List(t.Context(), metav1.ListOptions{})
@@ -104,14 +111,14 @@ func TestRecordCloudProviderInitializationFailure(t *testing.T) {
 	assert.Nil(t, event.Series)
 }
 
-func TestRecordCloudProviderInitializationFailureUsesPodReference(t *testing.T) {
+func TestRecordCloudProviderEventUsesPodReference(t *testing.T) {
 	t.Setenv(podNameEnv, "xoccm-123")
 	t.Setenv(podNamespaceEnv, "custom-system")
 	t.Setenv(podUIDEnv, "87db141c-8f50-4b8e-9d23-0c8de730216a")
 
 	client := fake.NewClientset()
 
-	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	err := recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
 	assert.NoError(t, err)
 
 	events, err := client.EventsV1().Events("custom-system").List(t.Context(), metav1.ListOptions{})
@@ -127,16 +134,16 @@ func TestRecordCloudProviderInitializationFailureUsesPodReference(t *testing.T) 
 	assert.Equal(t, "xoccm-123", event.ReportingInstance)
 }
 
-func TestRecordCloudProviderInitializationFailureUpdatesExistingEventSeries(t *testing.T) {
+func TestRecordCloudProviderEventUpdatesExistingEventSeries(t *testing.T) {
 	t.Setenv(podNameEnv, "xoccm-123")
 	t.Setenv(podNamespaceEnv, "custom-system")
 	t.Setenv(podUIDEnv, "87db141c-8f50-4b8e-9d23-0c8de730216a")
 
 	client := fake.NewClientset()
 
-	err := recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	err := recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
 	assert.NoError(t, err)
-	err = recordCloudProviderInitializationFailure(t.Context(), client, errors.New("tls: failed to verify certificate"))
+	err = recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
 	assert.NoError(t, err)
 
 	events, err := client.EventsV1().Events("custom-system").List(t.Context(), metav1.ListOptions{})
@@ -144,4 +151,81 @@ func TestRecordCloudProviderInitializationFailureUpdatesExistingEventSeries(t *t
 	assert.Len(t, events.Items, 1)
 	assert.NotNil(t, events.Items[0].Series)
 	assert.Equal(t, int32(2), events.Items[0].Series.Count)
+}
+
+// fakeClientBuilder only implements ClientOrDie, the one method Initialize uses.
+type fakeClientBuilder struct {
+	cloudprovider.ControllerClientBuilder
+	client clientset.Interface
+}
+
+func (b fakeClientBuilder) ClientOrDie(string) clientset.Interface { return b.client }
+
+func TestInitializeRecordsCheckClientEvent(t *testing.T) {
+	onePool := []*payloads.Pool{{NameLabel: "pool"}}
+
+	tests := []struct {
+		name      string
+		pools     []*payloads.Pool
+		poolErr   error
+		wantEvent string
+		wantExit  []int
+	}{
+		{name: "reachable", pools: onePool, wantEvent: corev1.EventTypeNormal + "/" + eventReasonClientReady},
+		{
+			name: "unreachable", poolErr: errors.New("dial tcp: connection refused"),
+			wantEvent: corev1.EventTypeWarning + "/" + eventReasonFailedToCheckClient, wantExit: []int{1},
+		},
+		{
+			name: "bad gateway", poolErr: apiError("pools", http.StatusBadGateway, ""),
+			wantEvent: corev1.EventTypeWarning + "/" + eventReasonFailedToCheckClient, wantExit: []int{1},
+		},
+		{
+			name: "unauthorized", poolErr: apiError("pools", http.StatusUnauthorized, ""),
+			wantEvent: corev1.EventTypeWarning + "/" + eventReasonFailedToAuthenticate, wantExit: []int{1},
+		},
+		{
+			name: "forbidden", poolErr: apiError("pools", http.StatusForbidden, ""),
+			wantEvent: corev1.EventTypeWarning + "/" + eventReasonFailedToAuthenticate, wantExit: []int{1},
+		},
+		{
+			name: "no pool", pools: []*payloads.Pool{},
+			wantEvent: corev1.EventTypeWarning + "/" + eventReasonNoPoolAvailable, wantExit: []int{1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			lib := mock_library.NewMockLibrary(ctrl)
+			pool := mock_library.NewMockPool(ctrl)
+			lib.EXPECT().Pool().Return(pool)
+			pool.EXPECT().GetAll(gomock.Any(), 1, "").Return(tt.pools, tt.poolErr)
+
+			if len(tt.pools) > 0 {
+				vm := mock_library.NewMockVM(ctrl)
+				lib.EXPECT().VM().Return(vm)
+				vm.EXPECT().GetAll(gomock.Any(), 1, "").Return([]*payloads.VM{}, nil)
+			}
+
+			var exitCodes []int
+			oldExit := exit
+			exit = func(_ time.Duration, code int) { exitCodes = append(exitCodes, code) }
+			t.Cleanup(func() { exit = oldExit })
+
+			stop := make(chan struct{})
+			t.Cleanup(func() { close(stop) })
+
+			kube := fake.NewClientset()
+			c := &cloud{client: &xok8s.XoClient{Client: lib}}
+			c.Initialize(fakeClientBuilder{client: kube}, stop)
+
+			assert.Equal(t, tt.wantExit, exitCodes)
+
+			events, err := kube.EventsV1().Events(metav1.NamespaceSystem).List(t.Context(), metav1.ListOptions{})
+			assert.NoError(t, err)
+			assert.Len(t, events.Items, 1)
+			assert.Equal(t, tt.wantEvent, events.Items[0].Type+"/"+events.Items[0].Reason)
+		})
+	}
 }
