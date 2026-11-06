@@ -249,7 +249,9 @@ func (i *instances) GetInstance(ctx context.Context, node *v1.Node) (*payloads.V
 		return nil, fmt.Errorf("instances.getInstance() error: vm.PoolID=%s mismatches nodePoolID=%s", vm.PoolID, poolID)
 	}
 
-	klog.V(5).Infof("instances.getInstance() vm %+v", vm)
+	klog.V(5).InfoS("instances.getInstance()", "id", vm.ID, "name", vm.NameLabel,
+		"pool", vm.PoolID, "host", vm.Container, "powerState", vm.PowerState,
+		"ops", len(vm.CurrentOperations))
 
 	return vm, nil
 }
