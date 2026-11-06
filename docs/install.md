@@ -140,5 +140,11 @@ The steps to troubleshoot the Xen Orchestra CCM:
 3. Check the logs
 4. Check kubelet flag `--cloud-provider=external`, delete the node resource and restart the kubelet.
 5. Check the logs
-6. Wait for 1 minute. If CCM cannot reach the Xen Orchestra API, it will log the error.
+6. At start-up CCM checks the Xen Orchestra API once and records an event. If the check fails, it exits and the pod restarts. Look for the events:
+   ```shell
+   kubectl -n kube-system get events --field-selector reason=FailedToAuthenticate     # token rejected (401/403)
+   kubectl -n kube-system get events --field-selector reason=NoPoolAvailable          # no pool connected or visible to the account
+   kubectl -n kube-system get events --field-selector reason=FailedToCheckClient      # Xen Orchestra unreachable or other error
+   kubectl -n kube-system get events --field-selector reason=XenOrchestraClientReady  # check succeeded
+   ```
 7. Check tains, labels, and providerID in the `Node` object.

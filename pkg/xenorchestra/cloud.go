@@ -21,6 +21,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -50,7 +51,13 @@ const (
 	podUIDEnv                        = "POD_UID"
 	eventActionCheckClient           = "CheckClient"
 	eventReasonFailedToCheckClient   = "FailedToCheckClient"
+	eventReasonFailedToAuthenticate  = "FailedToAuthenticate"
+	eventReasonNoPoolAvailable       = "NoPoolAvailable"
+	eventReasonClientReady           = "XenOrchestraClientReady"
 )
+
+// exit is replaced in tests.
+var exit = klog.FlushAndExit
 
 type cloud struct {
 	client      *xok8s.XoClient
@@ -109,14 +116,30 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 	c.ctx = ctx
 	c.stop = cancel
 
-	err := c.client.CheckClient(ctx)
-	if err != nil {
+	kubeClient := clientBuilder.ClientOrDie(cloudControllerManagerClientName)
+
+	if err := c.client.CheckClient(ctx); err != nil {
 		klog.ErrorS(err, "failed to check Xen Orchestra client")
-		kubeClient := clientBuilder.ClientOrDie(cloudControllerManagerClientName)
-		if eventErr := recordCloudProviderInitializationFailure(ctx, kubeClient, err); eventErr != nil {
+
+		reason, note := eventReasonFailedToCheckClient, fmt.Sprintf("Failed to check Xen Orchestra client: %v", err)
+		switch {
+		case errors.Is(err, xok8s.ErrAuthentication):
+			reason, note = eventReasonFailedToAuthenticate, fmt.Sprintf("Xen Orchestra rejected the credentials, check the token: %v", err)
+		case errors.Is(err, xok8s.ErrNoPool):
+			reason, note = eventReasonNoPoolAvailable, fmt.Sprintf("Xen Orchestra has no pool available, check its pool servers and the account permissions: %v", err)
+		}
+
+		if eventErr := recordCloudProviderEvent(ctx, kubeClient, corev1.EventTypeWarning, reason, note); eventErr != nil {
 			klog.ErrorS(eventErr, "failed to record Xen Orchestra client check failure event")
 		}
-		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
+
+		exit(klog.ExitFlushTimeout, 1)
+
+		return
+	}
+
+	if eventErr := recordCloudProviderEvent(ctx, kubeClient, corev1.EventTypeNormal, eventReasonClientReady, "Xen Orchestra client check succeeded"); eventErr != nil {
+		klog.ErrorS(eventErr, "failed to record Xen Orchestra client ready event")
 	}
 
 	// Broadcast the upstream stop signal to all provider-level goroutines
@@ -130,22 +153,22 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 	klog.InfoS("Xen Orchestra client initialized")
 }
 
-func recordCloudProviderInitializationFailure(ctx context.Context, kubeClient clientset.Interface, err error) error {
+func recordCloudProviderEvent(ctx context.Context, kubeClient clientset.Interface, eventType, reason, note string) error {
 	eventTime := metav1.MicroTime{Time: time.Now()}
 	regarding := cloudProviderEventObjectReference()
 	event := &eventsv1.Event{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cloudProviderEventName(regarding),
+			Name:      cloudProviderEventName(regarding, reason),
 			Namespace: cloudProviderEventNamespace(),
 		},
 		EventTime:           eventTime,
 		ReportingController: ProviderName,
 		ReportingInstance:   cloudProviderEventReportingInstance(),
 		Action:              eventActionCheckClient,
-		Reason:              eventReasonFailedToCheckClient,
+		Reason:              reason,
 		Regarding:           regarding,
-		Note:                fmt.Sprintf("Failed to check Xen Orchestra client: %v", err),
-		Type:                corev1.EventTypeWarning,
+		Note:                note,
+		Type:                eventType,
 	}
 
 	eventsClient := kubeClient.EventsV1().Events(cloudProviderEventNamespace())
@@ -176,14 +199,14 @@ func recordCloudProviderInitializationFailure(ctx context.Context, kubeClient cl
 	return nil
 }
 
-func cloudProviderEventName(regarding corev1.ObjectReference) string {
+func cloudProviderEventName(regarding corev1.ObjectReference, reason string) string {
 	hashInput := fmt.Sprintf("%s/%s/%s/%s/%s/%s",
 		regarding.Namespace,
 		regarding.Kind,
 		regarding.Name,
 		regarding.UID,
 		eventActionCheckClient,
-		eventReasonFailedToCheckClient,
+		reason,
 	)
 	hash := sha256.Sum256([]byte(hashInput))
 
