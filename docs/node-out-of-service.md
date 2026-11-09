@@ -137,8 +137,10 @@ defaults).
 
 ## RBAC
 
-The controller only needs `get/list/watch/update/patch` on `nodes`, which the
-CCM already has.
+The controller runs as the `node-controller` ServiceAccount, like the upstream
+node controllers, and patches nodes through the built-in
+`system:controller:node-controller` role. The chart grants nothing extra; see
+[RBAC](install.md#rbac).
 
 ## Measured impact
 

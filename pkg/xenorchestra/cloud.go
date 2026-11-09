@@ -19,8 +19,6 @@ package xenorchestra
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -31,7 +29,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
@@ -54,6 +51,9 @@ const (
 	eventReasonFailedToAuthenticate  = "FailedToAuthenticate"
 	eventReasonNoPoolAvailable       = "NoPoolAvailable"
 	eventReasonClientReady           = "XenOrchestraClientReady"
+
+	// NodeControllerClientName is the only identity the chart lets the CCM mint a token for.
+	NodeControllerClientName = "node-controller"
 )
 
 // exit is replaced in tests.
@@ -116,7 +116,7 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 	c.ctx = ctx
 	c.stop = cancel
 
-	kubeClient := clientBuilder.ClientOrDie(cloudControllerManagerClientName)
+	kubeClient := clientBuilder.ClientOrDie(NodeControllerClientName)
 
 	if err := c.client.CheckClient(ctx); err != nil {
 		klog.ErrorS(err, "failed to check Xen Orchestra client")
@@ -158,7 +158,8 @@ func recordCloudProviderEvent(ctx context.Context, kubeClient clientset.Interfac
 	regarding := cloudProviderEventObjectReference()
 	event := &eventsv1.Event{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cloudProviderEventName(regarding, reason),
+			// Same naming as client-go's event recorder: unique per call, no series to update.
+			Name:      fmt.Sprintf("%s.%x", regarding.Name, eventTime.UnixNano()),
 			Namespace: cloudProviderEventNamespace(),
 		},
 		EventTime:           eventTime,
@@ -171,46 +172,10 @@ func recordCloudProviderEvent(ctx context.Context, kubeClient clientset.Interfac
 		Type:                eventType,
 	}
 
-	eventsClient := kubeClient.EventsV1().Events(cloudProviderEventNamespace())
-	if _, createErr := eventsClient.Create(ctx, event, metav1.CreateOptions{}); createErr != nil {
-		if !apierrors.IsAlreadyExists(createErr) {
-			return createErr
-		}
+	// Synchronous create: the failure event is followed by exit, an async recorder would drop it.
+	_, err := kubeClient.EventsV1().Events(cloudProviderEventNamespace()).Create(ctx, event, metav1.CreateOptions{})
 
-		existingEvent, getErr := eventsClient.Get(ctx, event.Name, metav1.GetOptions{})
-		if getErr != nil {
-			return getErr
-		}
-
-		event.ResourceVersion = existingEvent.ResourceVersion
-		event.EventTime = existingEvent.EventTime
-		event.Series = &eventsv1.EventSeries{
-			Count:            2,
-			LastObservedTime: eventTime,
-		}
-		if existingEvent.Series != nil {
-			event.Series.Count = existingEvent.Series.Count + 1
-		}
-
-		_, updateErr := eventsClient.Update(ctx, event, metav1.UpdateOptions{})
-		return updateErr
-	}
-
-	return nil
-}
-
-func cloudProviderEventName(regarding corev1.ObjectReference, reason string) string {
-	hashInput := fmt.Sprintf("%s/%s/%s/%s/%s/%s",
-		regarding.Namespace,
-		regarding.Kind,
-		regarding.Name,
-		regarding.UID,
-		eventActionCheckClient,
-		reason,
-	)
-	hash := sha256.Sum256([]byte(hashInput))
-
-	return fmt.Sprintf("%s-%s", ProviderName, hex.EncodeToString(hash[:])[:12])
+	return err
 }
 
 func cloudProviderEventObjectReference() corev1.ObjectReference {
