@@ -98,6 +98,7 @@ helm upgrade -i --namespace=kube-system -f xo-ccm.yaml \
 | imagePullSecrets | list | `[]` |  |
 | nameOverride | string | `""` |  |
 | fullnameOverride | string | `""` |  |
+| envFrom | list | `[]` | Load environment variables from secrets or config maps (e.g. the XOA_* credentials, see values.envfromsecret.yaml) |
 | extraEnvs | list | `[]` | Any extra environments for xenorchestra-cloud-controller-manager |
 | extraArgs | list | `[]` | Any extra arguments for xenorchestra-cloud-controller-manager |
 | enabledControllers | list | `["cloud-node","cloud-node-lifecycle","cloud-node-label-sync","cloud-node-out-of-service"]` | List of controllers should be enabled. Use '*' to enable all controllers. Support only `cloud-node,cloud-node-lifecycle,cloud-node-label-sync,cloud-node-out-of-service` controllers. |

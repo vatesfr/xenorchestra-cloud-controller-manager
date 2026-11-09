@@ -76,6 +76,13 @@ kubectl apply -f https://raw.githubusercontent.com/vatesfr/xenorchestra-cloud-co
 Other published manifests are available if you need a variant:
 * `cloud-controller-manager-hostnetwork.yml` — runs CCM with `hostNetwork: true` (This is useful when Kubernetes networking is not yet ready or when the XO network cannot be reached from within the Kubernetes network.).
 * `cloud-controller-manager-edge.yml` — minimal footprint variant for edge clusters.
+* `cloud-controller-manager-envfrom-secret.yml` — reads the credentials from `XOA_*` environment variables instead of
+  `config.yaml`. Create the secret first:
+
+  ```shell
+  kubectl -n kube-system create secret generic xenorchestra-config \
+    --from-literal=XOA_URL=https://xoa.example.com --from-literal=XOA_TOKEN=... --from-literal=XOA_INSECURE=false
+  ```
 
 ### Method 2: helm chart
 
