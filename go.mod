@@ -1,6 +1,6 @@
 module github.com/vatesfr/xenorchestra-cloud-controller-manager
 
-go 1.26.10
+go 1.27.3
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
