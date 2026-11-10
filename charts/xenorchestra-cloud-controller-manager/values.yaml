@@ -16,6 +16,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# -- Load environment variables from secrets or config maps (e.g. the XOA_* credentials, see values.envfromsecret.yaml)
+envFrom: []
+
 # -- Any extra environments for xenorchestra-cloud-controller-manager
 extraEnvs: []
   # - name: KUBERNETES_SERVICE_HOST

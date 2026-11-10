@@ -120,6 +120,10 @@ docs:
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager.yml
 	helm template -n kube-system xenorchestra-cloud-controller-manager \
 		--set-string image.tag=$(TAG) \
+		-f charts/xenorchestra-cloud-controller-manager/values.envfromsecret.yaml \
+		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-envfrom-secret.yml
+	helm template -n kube-system xenorchestra-cloud-controller-manager \
+		--set-string image.tag=$(TAG) \
 		--set useDaemonSet=true \
 		--set existingConfigSecret=xenorchestra-cloud-controller-manager \
 		charts/xenorchestra-cloud-controller-manager > docs/deploy/cloud-controller-manager-daemonset.yml
