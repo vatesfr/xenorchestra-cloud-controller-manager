@@ -134,23 +134,17 @@ func TestRecordCloudProviderEventUsesPodReference(t *testing.T) {
 	assert.Equal(t, "xoccm-123", event.ReportingInstance)
 }
 
-func TestRecordCloudProviderEventUpdatesExistingEventSeries(t *testing.T) {
-	t.Setenv(podNameEnv, "xoccm-123")
-	t.Setenv(podNamespaceEnv, "custom-system")
-	t.Setenv(podUIDEnv, "87db141c-8f50-4b8e-9d23-0c8de730216a")
-
+func TestRecordCloudProviderEventCreatesOneEventPerCall(t *testing.T) {
 	client := fake.NewClientset()
 
-	err := recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
-	assert.NoError(t, err)
-	err = recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client: tls: failed to verify certificate")
-	assert.NoError(t, err)
+	for range 2 {
+		err := recordCloudProviderEvent(t.Context(), client, corev1.EventTypeWarning, eventReasonFailedToCheckClient, "Failed to check Xen Orchestra client")
+		assert.NoError(t, err)
+	}
 
-	events, err := client.EventsV1().Events("custom-system").List(t.Context(), metav1.ListOptions{})
+	events, err := client.EventsV1().Events(metav1.NamespaceSystem).List(t.Context(), metav1.ListOptions{})
 	assert.NoError(t, err)
-	assert.Len(t, events.Items, 1)
-	assert.NotNil(t, events.Items[0].Series)
-	assert.Equal(t, int32(2), events.Items[0].Series.Count)
+	assert.Len(t, events.Items, 2)
 }
 
 // fakeClientBuilder only implements ClientOrDie, the one method Initialize uses.
@@ -159,7 +153,13 @@ type fakeClientBuilder struct {
 	client clientset.Interface
 }
 
-func (b fakeClientBuilder) ClientOrDie(string) clientset.Interface { return b.client }
+func (b fakeClientBuilder) ClientOrDie(name string) clientset.Interface {
+	if name != NodeControllerClientName {
+		panic("unexpected client name " + name)
+	}
+
+	return b.client
+}
 
 func TestInitializeRecordsCheckClientEvent(t *testing.T) {
 	onePool := []*payloads.Pool{{NameLabel: "pool"}}

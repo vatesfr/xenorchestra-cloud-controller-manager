@@ -121,6 +121,30 @@ requested VM and Xen Orchestra still knows the pool, so a proxy 404 no longer de
 it hides the real cause in the logs. See
 [When Xen Orchestra loses a pool](node-out-of-service.md#when-xen-orchestra-loses-a-pool).
 
+## RBAC
+
+The CCM runs with `--use-service-account-credentials`: each controller acts under its own ServiceAccount in
+`kube-system`, as in the upstream cloud controller manager. Two identities are involved:
+
+* **The CCM ServiceAccount** (from the chart). A ClusterRole lets it read nodes and write events. A Role in
+  `kube-system` lets it hold the leader Lease `cloud-controller-manager-xenorchestra` and get a token for the
+  `node-controller` ServiceAccount only.
+* **`node-controller`**, which does every node write (addresses, labels, taints, deletion) through the built-in
+  `system:controller:node-controller` ClusterRole. Check that your distribution ships it:
+
+  ```shell
+  kubectl get clusterrole system:controller:node-controller
+  ```
+
+  If it is missing, grant `node-controller` in `kube-system` the node verbs `get`, `list`, `watch`, `update`,
+  `patch`, `delete`, `nodes/status` `patch`, and `events` `create`/`patch`/`update` in both the core and
+  `events.k8s.io` API groups.
+
+With `rbac.create=false`, create these yourself: the ClusterRole and Role in
+`charts/xenorchestra-cloud-controller-manager/templates/role.yaml` and `role-kube-system.yaml`, bound to the CCM
+ServiceAccount. Do not remove `--use-service-account-credentials`: without it the CCM ServiceAccount itself would need
+the node write verbs.
+
 ## Troubleshooting
 
 Read the [Kubernetes documentation for Cloud Controller Manager Administration](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/).

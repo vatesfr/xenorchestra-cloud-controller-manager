@@ -55,14 +55,14 @@ func main() {
 	controllerInitializers := app.DefaultInitFuncConstructors
 	controllerInitializers[nodelabelsync.ControllerName] = app.ControllerInitFuncConstructor{
 		InitContext: app.ControllerInitContext{
-			ClientName: "node-controller",
+			ClientName: xenorchestra.NodeControllerClientName,
 		},
 		Constructor: nodelabelsync.StartNodeLabelSyncControllerWrapper,
 	}
 
 	controllerInitializers[nodeoutofservice.ControllerName] = app.ControllerInitFuncConstructor{
 		InitContext: app.ControllerInitContext{
-			ClientName: "node-controller",
+			ClientName: xenorchestra.NodeControllerClientName,
 		},
 		Constructor: nodeoutofservice.StartControllerWrapper,
 	}
