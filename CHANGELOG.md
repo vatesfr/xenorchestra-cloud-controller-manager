@@ -1,3 +1,37 @@
+<a name="v1.3.0"></a>
+## [v1.3.0](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.2.1...v1.3.0) (2026-11-16)
+
+Welcome to the v1.3.0 release of Kubernetes cloud controller manager for Xen Orchestra!
+
+### Bug Fixes
+
+- **chart:** scope token minting and the leader Lease to kube-system, record start-up events as node-controller
+- **chart:** support envFrom and generate the envfrom-secret example
+- **cloud:** record FailedToAuthenticate, NoPoolAvailable, XenOrchestraClientReady events on start-up check
+- **xo:** treat a 404 as deleted VM only when Xen Orchestra confirms it
+
+### Features
+
+- **node-out-of-service:** taint node when VM is shutting down
+
+### Changelog
+
+* a6c11ff fix(chart): scope token minting and the leader Lease to kube-system, record start-up events as node-controller
+* 2a2615a fix(chart): support envFrom and generate the envfrom-secret example
+* 13d675a build(deps): bump golang to use 1.27.3
+* e5cfb2c chore(deps): bump xenorchestra-k8s-common
+* a93beeb fix(cloud): record FailedToAuthenticate, NoPoolAvailable, XenOrchestraClientReady events on start-up check
+* f377678 chore(deps): bump Xo SDK and other dependencies
+* 28263fa refactor(controllers): structured VM log, drop the unused interval, return controllers, skip unmanaged nodes
+* 42fbf95 chore(deps): bump XO SDK to v1.22.0
+* c0df8e8 fix(xo): treat a 404 as deleted VM only when Xen Orchestra confirms it
+* 3c144a6 build(deps): bump google.golang.org/grpc from 1.83.0 to 1.83.2
+* f5eff99 build(deps): bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+* 86ca1bb build(deps): bump github.com/google/cel-go from 0.26.0 to 0.29.0
+* f541918 build(deps): bump github.com/jarcoal/httpmock from 1.4.1 to 1.4.2
+* 7faa31d doc: update documentation for node-out-of-service feature
+* a8c28af chore(deps): bump XO SDK version to use tag v1.20.0
+* 6f80298 feat(node-out-of-service): taint node when VM is shutting down
 <a name="V1.2.1"></a>
 ## [V1.2.1](https://github.com/vatesfr/xenorchestra-cloud-controller-manager/compare/v1.2.0...V1.2.1) (2026-09-24)
 

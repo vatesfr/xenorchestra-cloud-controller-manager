@@ -5,10 +5,10 @@ kind: ServiceAccount
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.3.0
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.4.0
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v1.2.1"
+    app.kubernetes.io/version: "v1.3.0"
     app.kubernetes.io/managed-by: Helm
   namespace: kube-system
 
@@ -19,20 +19,12 @@ kind: ClusterRole
 metadata:
   name: system:xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.3.0
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.4.0
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v1.2.1"
+    app.kubernetes.io/version: "v1.3.0"
     app.kubernetes.io/managed-by: Helm
 rules:
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - create
-  - update
 - apiGroups:
   - ""
   resources:
@@ -40,14 +32,6 @@ rules:
   verbs:
   - create
   - patch
-  - update
-- apiGroups:
-  - events.k8s.io
-  resources:
-  - events
-  verbs:
-  - get
-  - create
   - update
 - apiGroups:
   - ""
@@ -57,28 +41,6 @@ rules:
   - get
   - list
   - watch
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - nodes/status
-  verbs:
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  verbs:
-  - get
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts/token
-  verbs:
-  - create
 
 ---
 # Source: xenorchestra-cloud-controller-manager/templates/rolebinding.yaml
@@ -89,6 +51,76 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
+  name: system:xenorchestra-cloud-controller-manager
+subjects:
+- kind: ServiceAccount
+  name: xenorchestra-cloud-controller-manager
+  namespace: kube-system
+
+---
+# Source: xenorchestra-cloud-controller-manager/templates/role-kube-system.yaml
+# Node writes are done by the node-controller ServiceAccount (--use-service-account-credentials),
+# so the CCM only mints its token. Kubernetes cannot restrict create by name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: system:xenorchestra-cloud-controller-manager
+  namespace: kube-system
+  labels:
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.4.0
+    app.kubernetes.io/name: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
+    app.kubernetes.io/version: "v1.3.0"
+    app.kubernetes.io/managed-by: Helm
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  resourceNames:
+  - node-controller
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts/token
+  verbs:
+  - create
+  resourceNames:
+  - node-controller
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+  resourceNames:
+  - cloud-controller-manager-xenorchestra
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+
+---
+# Source: xenorchestra-cloud-controller-manager/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: system:xenorchestra-cloud-controller-manager
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
   name: system:xenorchestra-cloud-controller-manager
 subjects:
 - kind: ServiceAccount
@@ -118,10 +150,10 @@ kind: Deployment
 metadata:
   name: xenorchestra-cloud-controller-manager
   labels:
-    helm.sh/chart: xenorchestra-cloud-controller-manager-1.3.0
+    helm.sh/chart: xenorchestra-cloud-controller-manager-1.4.0
     app.kubernetes.io/name: xenorchestra-cloud-controller-manager
     app.kubernetes.io/instance: xenorchestra-cloud-controller-manager
-    app.kubernetes.io/version: "v1.2.1"
+    app.kubernetes.io/version: "v1.3.0"
     app.kubernetes.io/managed-by: Helm
   namespace: kube-system
 spec:
@@ -160,7 +192,7 @@ spec:
               - ALL
             seccompProfile:
               type: RuntimeDefault
-          image: "ghcr.io/vatesfr/xenorchestra-cloud-controller-manager:v1.2.1"
+          image: "ghcr.io/vatesfr/xenorchestra-cloud-controller-manager:v1.3.0"
           imagePullPolicy: IfNotPresent
           args:
             - --v=2
